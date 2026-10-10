@@ -1,3 +1,4 @@
+# VoiceGuard Git Ignore Rules
 ﻿# Python artifacts
 __pycache__/
 *.py[cod]
