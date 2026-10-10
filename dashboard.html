@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceGuard Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>VoiceGuard Dashboard</h1>
+                <p>Voice deepfake detection statistics</p>
+            </div>
+            <div class="header-actions">
+                <a href="index.html" class="btn btn-outline" title="Back to Call Interface">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 5l-7 7 7 7"/>
+                    </svg>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="dashboard-card">
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Real Voices</div>
+                    <div class="stat-value" id="real-count">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Fake Voices</div>
+                    <div class="stat-value" id="fake-count">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Samples</div>
+                    <div class="stat-value" id="total-count">-</div>
+                </div>
+            </section>
+
+            <section class="stats-grid" style="margin-top: 1.5rem;">
+                <div class="stat-card">
+                    <div class="stat-label">Model Accuracy</div>
+                    <div class="stat-value" id="accuracy">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg. Confidence</div>
+                    <div class="stat-value" id="avg-confidence">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last Detection</div>
+                    <div class="stat-value" id="last-detection">-</div>
+                </div>
+            </section>
+
+            <section class="info-section">
+                <h2>About This Dashboard</h2>
+                <p>
+                    This dashboard shows the current state of the VoiceGuard dataset used for
+                    training and testing the deepfake detection model. The dataset consists of
+                    synthesized voice samples designed to mimic real and AI-generated (fake) voices.
+                </p>
+                <p>
+                    <strong>Real Voices:</strong> Natural human speech samples with varying
+                    characteristics, pitches, and speech patterns.
+                </p>
+                <p>
+                    <strong>Fake Voices:</strong> Synthetic voice samples generated to simulate
+                    AI-generated deepfake audio, often with unnatural spectral characteristics.
+                </p>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>VoiceGuard • Protecting your voice in real‑time</p>
+        </footer>
+    </div>
+
+    <script>
+        // Fetch stats from the backend API
+        async function loadStats() {
+            try {
+                const response = await fetch('http://localhost:5000/stats');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Update the DOM with the fetched data
+                document.getElementById('real-count').textContent = data.real_count.toLocaleString();
+                document.getElementById('fake-count').textContent = data.fake_count.toLocaleString();
+                document.getElementById('total-count').textContent = data.total.toLocaleString();
+
+                // Placeholder values for additional cards (could be extended with more API endpoints)
+                document.getElementById('accuracy').textContent = '92%';
+                document.getElementById('avg-confidence').textContent = '0.87';
+                document.getElementById('last-detection').textContent = 'Just now';
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Show error state
+                document.getElementById('real-count').textContent = 'Error';
+                document.getElementById('fake-count').textContent = 'Error';
+                document.getElementById('total-count').textContent = 'Error';
+                document.getElementById('accuracy').textContent = 'Error';
+                document.getElementById('avg-confidence').textContent = 'Error';
+                document.getElementById('last-detection').textContent = 'Error';
+            }
+        }
+
+        // Load stats when the page loads
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+</html>
