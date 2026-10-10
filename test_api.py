@@ -1,5 +1,6 @@
 """
-VoiceGuard Integration API Test Script
+VoiceGuard Integration API Test
+# Backend smoke test Script
 ======================================
 Tests the running VoiceGuard FastAPI backend on http://localhost:8000.
 Usage:
