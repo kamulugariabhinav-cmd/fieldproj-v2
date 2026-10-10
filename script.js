@@ -33,15 +33,35 @@ const state = {
     liveWindowCount: 0,
     
     // Config
-    apiBaseUrl: localStorage.getItem('voiceguard_api_url') || window.location.origin,
+    apiBaseUrl: (typeof window.getVoiceGuardApiBaseUrl === 'function') ? window.getVoiceGuardApiBaseUrl() : (localStorage.getItem('voiceguard_api_url') || 'http://localhost:8000'),
     threshold: 0.50,
     modelName: 'AASIST-L',
     history: JSON.parse(localStorage.getItem('voiceguard_history') || '[]')
 };
 
-// Fallback URL if opened directly via file:// or non-backend port
-if (state.apiBaseUrl.startsWith('file:') || state.apiBaseUrl.includes(':3000') || state.apiBaseUrl.includes(':5500')) {
-    state.apiBaseUrl = 'http://localhost:8000';
+// ==============================================================================
+// Centralized API Client & Endpoint Resolution
+// ==============================================================================
+function getApiEndpoint(path) {
+    const base = (state.apiBaseUrl || '').trim().replace(/\/+$/, '');
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${base}${cleanPath}`;
+}
+
+function isMixedContentError(url) {
+    const target = url || state.apiBaseUrl;
+    return window.location.protocol === 'https:' && target.startsWith('http://') && !target.includes('localhost') && !target.includes('127.0.0.1');
+}
+
+function formatNetworkErrorMessage(err, url) {
+    const targetUrl = url || state.apiBaseUrl;
+    if (isMixedContentError(targetUrl)) {
+        return `Mixed-Content Blocked: The frontend is loaded over HTTPS, but the backend URL is HTTP (${targetUrl}). Web browsers strictly block insecure HTTP requests from HTTPS sites. Please connect to an HTTPS backend (e.g. Render, Railway, or an HTTPS tunnel) or run both locally via http://localhost:3000.`;
+    }
+    if (targetUrl.includes('.vercel.app')) {
+        return `Backend Unreachable: The API URL is currently pointing to Vercel (${targetUrl}), which only hosts static frontend files. A separate Python FastAPI/PyTorch backend is required. Click the settings gear icon to configure your remote backend URL or set VITE_API_BASE_URL in Vercel.`;
+    }
+    return `Could not connect to backend at ${targetUrl}. Please verify the server is running, publicly accessible, and has CORS allowed. (${err ? err.message || err : 'NetworkError'})`;
 }
 
 // ==============================================================================
@@ -446,7 +466,7 @@ async function runDetection() {
     try {
         setTimeout(() => { telemetryStep.textContent = 'AASIST neural inference on spectro-temporal graphs...'; }, 200);
 
-        const resp = await fetch(`${state.apiBaseUrl}/api/detect`, {
+        const resp = await fetch(getApiEndpoint("/api/detect"), {
             method: 'POST',
             body: formData
         });
@@ -473,7 +493,7 @@ async function runDetection() {
                 return;
             }
         } else {
-            alert(`Analysis Error: ${err.message}`);
+            alert(`Analysis Error:\n\n${formatNetworkErrorMessage(err, state.apiBaseUrl)}`);
         }
         document.getElementById('result-status-hint').textContent = 'Error during analysis';
     } finally {
@@ -682,7 +702,7 @@ async function sendLiveChunk(blob) {
 
     try {
         const t0 = performance.now();
-        const resp = await fetch(`${state.apiBaseUrl}/api/detect`, {
+        const resp = await fetch(getApiEndpoint("/api/detect"), {
             method: 'POST',
             body: formData
         });
@@ -874,7 +894,7 @@ function initSettingsModal() {
                 const resp = await fetch(`${testUrl}/health`, { signal: AbortSignal.timeout(3000) });
                 if (resp.ok) {
                     const data = await resp.json();
-                    testResult.textContent = `✓ Connected (${data.model_name})`;
+                    testResult.textContent = `✓ Connected (${data.model_name || "AASIST-L"})`;
                     testResult.style.color = 'var(--emerald-green)';
                 } else {
                     testResult.textContent = `✗ HTTP Error ${resp.status}`;
@@ -916,7 +936,7 @@ let externalProviders = {};
 
 async function loadExternalProviders() {
     try {
-        const resp = await fetch(`${state.apiBaseUrl}/api/external/providers`);
+        const resp = await fetch(getApiEndpoint("/api/external/providers"));
         if (resp.ok) {
             externalProviders = await resp.json();
             updateExternalSettingsUI();
@@ -1009,7 +1029,7 @@ function initExternalApiSettings() {
             }
 
             try {
-                const resp = await fetch(`${state.apiBaseUrl}/api/external/configure`, {
+                const resp = await fetch(getApiEndpoint("/api/external/configure"), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ provider_id: providerId, api_key: key, endpoint: endpoint })
@@ -1043,7 +1063,7 @@ function initExternalApiSettings() {
             testExtResult.style.color = 'var(--text-muted)';
 
             try {
-                const resp = await fetch(`${state.apiBaseUrl}/api/external/test-connection`, {
+                const resp = await fetch(getApiEndpoint("/api/external/test-connection"), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ provider_id: providerId, api_key: key, endpoint: endpoint })
@@ -1074,7 +1094,7 @@ let cachedModelRegistry = [];
 
 async function loadModelRegistry() {
     try {
-        const resp = await fetch(`${state.apiBaseUrl}/api/models`);
+        const resp = await fetch(getApiEndpoint("/api/models"));
         if (!resp.ok) return;
         const data = await resp.json();
         cachedModelRegistry = data.models || [];
@@ -1155,7 +1175,7 @@ async function runMultiModelComparison() {
     formData.append('threshold', state.threshold);
 
     try {
-        const resp = await fetch(`${state.apiBaseUrl}/api/compare`, {
+        const resp = await fetch(getApiEndpoint("/api/compare"), {
             method: 'POST',
             body: formData
         });
