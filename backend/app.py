@@ -28,7 +28,8 @@ from backend.config import (
     DEFAULT_SPOOF_THRESHOLD,
     MAX_UPLOAD_SIZE_MB,
     ALLOWED_EXTENSIONS,
-    ALLOWED_ORIGINS
+    ALLOWED_ORIGINS,
+    ALLOWED_ORIGIN_REGEX
 )
 from backend.models.registry import (
     MODEL_REGISTRY,
@@ -63,10 +64,13 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS if "*" not in ALLOWED_ORIGINS else ["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS", "HEAD", "PUT", "DELETE"],
     allow_headers=["*"],
+    expose_headers=["Content-Length", "X-Process-Time"],
+    max_age=600,
 )
 
 STATIC_DIR = Path(__file__).resolve().parent.parent

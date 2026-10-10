@@ -99,10 +99,26 @@ MAX_UPLOAD_SIZE_MB = int(os.getenv("MAX_UPLOAD_SIZE_MB", "25"))
 ALLOWED_EXTENSIONS = {".wav", ".mp3", ".flac", ".m4a", ".ogg", ".webm", ".aac"}
 
 # API and Security
-ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv("ALLOWED_ORIGINS", "*").split(",")
-    if origin.strip()
+DEFAULT_LOCAL_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:5500",
 ]
+
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+if _raw_origins and _raw_origins != "*":
+    ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+    for loc in DEFAULT_LOCAL_ORIGINS:
+        if loc not in ALLOWED_ORIGINS:
+            ALLOWED_ORIGINS.append(loc)
+else:
+    ALLOWED_ORIGINS = DEFAULT_LOCAL_ORIGINS.copy()
+
+# Regex to safely match any Vercel deployment (production or preview branches) and Render services
+ALLOWED_ORIGIN_REGEX = os.getenv("ALLOWED_ORIGIN_REGEX", r"^https://[a-zA-Z0-9_-]+(\.vercel\.app|\.onrender\.com)$")
 API_PORT = int(os.getenv("PORT", "8000"))
 API_HOST = os.getenv("HOST", "0.0.0.0")
