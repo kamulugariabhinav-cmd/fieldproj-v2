@@ -1,5 +1,6 @@
 """
-VoiceGuard CLI - Real AI Voice Deepfake Detection
+VoiceGuard CLI
+# Command-line interface - Real AI Voice Deepfake Detection
 =================================================
 Runs genuine pretrained AASIST-L / AASIST deepfake inference on local audio files.
 Usage:
