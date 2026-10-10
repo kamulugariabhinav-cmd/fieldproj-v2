@@ -1,18 +1,20 @@
-# Render blueprint
+# VoiceGuard Backend - Render Blueprint Configuration
 services:
   - type: web
     name: voiceguard-api
     env: python
-    buildCommand: pip install -r requirements.txt
+    region: oregon
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu && pip install --no-cache-dir -r requirements.txt
     startCommand: python backend.py
     healthCheckPath: /health
     autoDeploy: true
     envVars:
-      - key: PORT
-        value: 8000
+      - key: PYTHON_VERSION
+        value: 3.11.9
       - key: VOICEGUARD_MODEL
         value: AASIST-L
       - key: VOICEGUARD_THRESHOLD
-        value: 0.50
+        value: "0.50"
       - key: ALLOWED_ORIGINS
-        value: "*"
+        value: "https://fieldproj-v2.vercel.app"
