@@ -191,9 +191,11 @@ python -m pytest tests -v
 The frontend (`index.html`, `dashboard.html`, `style.css`, `script.js`) is static and deploys directly to Vercel:
 1. Connect your GitHub repository `kamulugariabhinav-cmd/fieldproj-v2` to Vercel.
 2. Select the `main` branch.
-3. Root directory: `./`
-4. Deploy!
-5. In the frontend header, click the settings gear icon and enter your deployed backend API URL.
+3. In **Project Settings -> Environment Variables**, add:
+   - `VITE_API_BASE_URL`: The public HTTPS URL of your deployed Python backend (e.g. `https://your-voiceguard-backend.onrender.com`).
+4. Root directory: `./`
+5. Deploy!
+6. You can also configure, test, or override the backend URL at any time via the settings gear icon in the header.
 
 ### Backend Deployment (Render / Railway / Docker)
 A Python ML backend with PyTorch should not be hosted on serverless functions due to memory limits. Use a containerized web service:
