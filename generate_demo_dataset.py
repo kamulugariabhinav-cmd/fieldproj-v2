@@ -1,5 +1,6 @@
 """
 VoiceGuard Dataset Generator
+# Audio sample generator utility
 ============================
 Creates verified bonafide and spoof audio samples for testing and evaluation.
 """
