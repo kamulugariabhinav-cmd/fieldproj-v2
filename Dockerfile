@@ -1,3 +1,4 @@
+# Production container image
 # VoiceGuard AI Backend - Optimized Production Dockerfile
 FROM python:3.11-slim
 
