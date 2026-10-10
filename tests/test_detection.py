@@ -224,3 +224,42 @@ def test_stereo_downmix_and_resampling():
     assert stats["original_sample_rate"] == 44100
     assert waveform.ndim == 1
     assert duration > 2.5
+
+
+# ------------------------------------------------------------------------------
+# 13. CORS Configuration & Preflight Validation
+# ------------------------------------------------------------------------------
+def test_cors_vercel_production_origin():
+    """Verify production Vercel frontend origin is allowed with credentials."""
+    resp = client.get("/health", headers={"Origin": "https://fieldproj-v2.vercel.app"})
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") == "https://fieldproj-v2.vercel.app"
+    assert resp.headers.get("access-control-allow-credentials") == "true"
+
+
+def test_cors_vercel_preview_branch_origin():
+    """Verify Vercel preview branch deployments are dynamically and securely allowed."""
+    preview_origin = "https://voiceguard-pr-123-team.vercel.app"
+    resp = client.get("/health", headers={"Origin": preview_origin})
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") == preview_origin
+
+
+def test_cors_preflight_options_request():
+    """Verify preflight OPTIONS requests return 200 with appropriate CORS headers."""
+    headers = {
+        "Origin": "https://fieldproj-v2.vercel.app",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "Content-Type"
+    }
+    resp = client.options("/api/detect", headers=headers)
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") == "https://fieldproj-v2.vercel.app"
+    assert "POST" in resp.headers.get("access-control-allow-methods", "")
+
+
+def test_cors_untrusted_origin_rejected():
+    """Verify untrusted origins are NOT granted access-control-allow-origin."""
+    resp = client.get("/health", headers={"Origin": "https://malicious-attacker-site.com"})
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") is None
