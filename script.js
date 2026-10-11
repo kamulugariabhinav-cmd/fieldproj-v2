@@ -33,7 +33,7 @@ const state = {
     liveWindowCount: 0,
     
     // Config
-    apiBaseUrl: (typeof window.getVoiceGuardApiBaseUrl === 'function') ? window.getVoiceGuardApiBaseUrl() : (localStorage.getItem('voiceguard_api_url') || 'http://localhost:8000'),
+    apiBaseUrl: (typeof window.getVoiceGuardApiBaseUrl === 'function') ? window.getVoiceGuardApiBaseUrl() : (localStorage.getItem('voiceguard_api_url') || 'https://fieldproj-v2.onrender.com'),
     threshold: 0.50,
     modelName: 'AASIST-L',
     history: JSON.parse(localStorage.getItem('voiceguard_history') || '[]')

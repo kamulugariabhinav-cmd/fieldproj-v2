@@ -5,7 +5,7 @@
 (function() {
     'use strict';
     window.__VOICEGUARD_CONFIG__ = {
-        API_BASE_URL: ""
+        API_BASE_URL: "https://fieldproj-v2.onrender.com"
     };
     window.getVoiceGuardApiBaseUrl = function() {
         try {
@@ -24,6 +24,6 @@
             if (window.location.port === '8000') return window.location.origin;
             return 'http://localhost:8000';
         }
-        return window.location.origin;
+        return 'https://fieldproj-v2.onrender.com';
     };
 })();

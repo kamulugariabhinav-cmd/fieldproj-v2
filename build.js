@@ -37,7 +37,7 @@ const configContent = `/**
             if (window.location.port === '8000') return window.location.origin;
             return 'http://localhost:8000';
         }
-        return window.location.origin;
+        return 'https://fieldproj-v2.onrender.com';
     };
 })();
 `;
