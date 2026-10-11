@@ -9,7 +9,7 @@
     var LOCAL_API_URL = 'http://localhost:8000';
 
     window.__VOICEGUARD_CONFIG__ = {
-        API_BASE_URL: ""
+        API_BASE_URL: 'https://fieldproj-v2.onrender.com'
     };
 
     window.getVoiceGuardApiBaseUrl = function() {
@@ -45,7 +45,7 @@
         // 2. Build-time injected configuration
         if (window.__VOICEGUARD_CONFIG__ && window.__VOICEGUARD_CONFIG__.API_BASE_URL) {
             var cfg = window.__VOICEGUARD_CONFIG__.API_BASE_URL.trim().replace(/\/+$/, '');
-            if (cfg) return cfg;
+            if (cfg && cfg !== 'https://fieldproj-v2.onrender.com') return cfg;
         }
 
         // 3. Runtime window.ENV configuration

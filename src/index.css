@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --vg-bg-light: #F5F5F5;
+    --vg-bg-dark: #0B1020;
+    --vg-accent: #4F46E5;
+    --vg-accent-rgb: 79, 70, 229;
+    --vg-accent-hover: #4338CA;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--vg-bg-light);
+    color: #0f172a;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .dark body, html.dark body {
+    background-color: var(--vg-bg-dark);
+    color: #f8fafc;
+  }
+}
+
+/* Glass effect utilities */
+.shadow-glass-xs {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.shadow-glass-sm {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+.shadow-glass-md {
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+}
+.shadow-glass-lg {
+  box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.12), 0 10px 15px -5px rgba(0, 0, 0, 0.06);
+}
+.shadow-glass-xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Accessibility: Reduced Transparency mode */
+.reduce-transparency .backdrop-blur-md,
+.reduce-transparency .backdrop-blur-xl,
+.reduce-transparency .backdrop-blur-2xl {
+  backdrop-filter: blur(4px) !important;
+  background-opacity: 0.95 !important;
+}
+
+.reduce-transparency .bg-white\/40,
+.reduce-transparency .bg-white\/60,
+.reduce-transparency .bg-white\/80 {
+  background-color: #ffffff !important;
+}
+
+.dark.reduce-transparency .bg-\[\#0B1020\]\/40,
+.dark.reduce-transparency .bg-\[\#0B1020\]\/70,
+.dark.reduce-transparency .bg-\[\#0B1020\]\/85 {
+  background-color: #0B1020 !important;
+}
+
+/* Accessibility: Reduced Motion mode */
+.reduce-motion * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Sleek scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(150, 150, 150, 0.5);
+}

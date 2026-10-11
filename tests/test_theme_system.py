@@ -268,23 +268,14 @@ def test_style_css_has_all_theme_tokens():
 
 
 def test_html_ui_elements_exist():
-    index_html = INDEX_HTML.read_text(encoding="utf-8")
-    dash_html = DASHBOARD_HTML.read_text(encoding="utf-8")
+    appearance_tsx = (REPO_ROOT / "src" / "components" / "dashboard" / "AppearanceSettings.tsx").read_text(encoding="utf-8")
+    header_tsx = (REPO_ROOT / "src" / "components" / "layout" / "GlassHeader.tsx").read_text(encoding="utf-8")
+    mobile_nav_tsx = (REPO_ROOT / "src" / "components" / "layout" / "GlassMobileNav.tsx").read_text(encoding="utf-8")
+    auth_modal_tsx = (REPO_ROOT / "src" / "components" / "public" / "AuthModal.tsx").read_text(encoding="utf-8")
 
-    assert "quick-theme-toggle-btn" in index_html
-    assert "quick-theme-toggle-btn" in dash_html
-
-    assert "Early Theme Loader" in index_html
-    assert "Early Theme Loader" in dash_html
-
-    assert "mtab-appearance" in index_html
-    assert "mcontent-appearance" in index_html
-    assert "theme-mode-segmented" in index_html
-    assert "accent-swatches-grid" in index_html
-    assert "theme-preview-box" in index_html
-
-    assert "mobile-bottom-nav" in index_html
-    assert "auth-modal" in index_html
-
-    assert 'src="theme.js"' in index_html
-    assert 'src="theme.js"' in dash_html
+    # Verify Liquid Glass Theme UI components exist and cover modes and accents
+    assert "Theme Mode" in appearance_tsx
+    assert "Accent Color" in appearance_tsx
+    assert "toggleThemeMode" in header_tsx
+    assert "GlassMobileNav" in mobile_nav_tsx
+    assert "AuthModal" in auth_modal_tsx

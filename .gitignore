@@ -61,3 +61,7 @@ scratch/
 ml/weights/
 backend/models/weights/
 
+
+# Whitelist src/lib for frontend code
+!src/lib/
+!src/lib/**
