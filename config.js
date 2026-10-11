@@ -4,26 +4,63 @@
  */
 (function() {
     'use strict';
+
+    var PRODUCTION_API_URL = 'https://fieldproj-v2.onrender.com';
+    var LOCAL_API_URL = 'http://localhost:8000';
+
     window.__VOICEGUARD_CONFIG__ = {
-        API_BASE_URL: "https://fieldproj-v2.onrender.com"
+        API_BASE_URL: ""
     };
+
     window.getVoiceGuardApiBaseUrl = function() {
+        var isLocal = false;
+        try {
+            var hostname = window.location.hostname;
+            isLocal = (hostname === 'localhost' || hostname === '127.0.0.1' || window.location.protocol === 'file:');
+        } catch (e) {}
+
+        // 1. User-saved custom URL from localStorage
         try {
             var userSaved = localStorage.getItem('voiceguard_api_url');
-            if (userSaved && userSaved.trim()) return userSaved.trim().replace(/\/+$/, '');
+            if (userSaved && typeof userSaved === 'string') {
+                userSaved = userSaved.trim().replace(/\/+$/, '');
+
+                if (!isLocal) {
+                    var isStaleLocal = userSaved.indexOf('localhost') !== -1 || userSaved.indexOf('127.0.0.1') !== -1;
+                    var isSameOrigin = (window.location && window.location.origin && userSaved === window.location.origin);
+                    var isMixedContent = (window.location.protocol === 'https:' && userSaved.indexOf('http://') === 0 && !isStaleLocal);
+
+                    if (isStaleLocal || isSameOrigin || isMixedContent) {
+                        try { localStorage.removeItem('voiceguard_api_url'); } catch (err) {}
+                        userSaved = null;
+                    }
+                }
+
+                if (userSaved && userSaved.length > 0) {
+                    return userSaved;
+                }
+            }
         } catch (e) {}
+
+        // 2. Build-time injected configuration
         if (window.__VOICEGUARD_CONFIG__ && window.__VOICEGUARD_CONFIG__.API_BASE_URL) {
-            return window.__VOICEGUARD_CONFIG__.API_BASE_URL;
+            var cfg = window.__VOICEGUARD_CONFIG__.API_BASE_URL.trim().replace(/\/+$/, '');
+            if (cfg) return cfg;
         }
+
+        // 3. Runtime window.ENV configuration
         if (typeof window !== 'undefined' && window.ENV) {
             var envUrl = window.ENV.VITE_API_BASE_URL || window.ENV.API_BASE_URL;
             if (envUrl && envUrl.trim()) return envUrl.trim().replace(/\/+$/, '');
         }
-        var hostname = window.location.hostname;
-        if (hostname === 'localhost' || hostname === '127.0.0.1' || window.location.protocol === 'file:') {
+
+        // 4. Local development default
+        if (isLocal) {
             if (window.location.port === '8000') return window.location.origin;
-            return 'http://localhost:8000';
+            return LOCAL_API_URL;
         }
-        return 'https://fieldproj-v2.onrender.com';
+
+        // 5. Production deployment default
+        return PRODUCTION_API_URL;
     };
 })();

@@ -33,7 +33,17 @@ const state = {
     liveWindowCount: 0,
     
     // Config
-    apiBaseUrl: (typeof window.getVoiceGuardApiBaseUrl === 'function') ? window.getVoiceGuardApiBaseUrl() : (localStorage.getItem('voiceguard_api_url') || 'https://fieldproj-v2.onrender.com'),
+    apiBaseUrl: (typeof window.getVoiceGuardApiBaseUrl === 'function')
+        ? window.getVoiceGuardApiBaseUrl()
+        : ((function() {
+            try {
+                var h = window.location.hostname;
+                if (h === 'localhost' || h === '127.0.0.1' || window.location.protocol === 'file:') {
+                    return 'http://localhost:8000';
+                }
+            } catch (e) {}
+            return 'https://fieldproj-v2.onrender.com';
+        })()),
     threshold: 0.50,
     modelName: 'AASIST-L',
     history: JSON.parse(localStorage.getItem('voiceguard_history') || '[]')
@@ -158,7 +168,7 @@ async function checkBackendHealth() {
     const statusLabel = document.getElementById('status-label');
 
     try {
-        const resp = await fetch(`${state.apiBaseUrl}/health`, { signal: AbortSignal.timeout(4000) });
+        const resp = await fetch(getApiEndpoint("/health"), { signal: AbortSignal.timeout(4000) });
         if (resp.ok) {
             const data = await resp.json();
             statusDot.className = 'status-dot online';
@@ -877,9 +887,15 @@ function initSettingsModal() {
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
             let url = input.value.trim().replace(/\/+$/, '');
-            if (!url) url = window.location.origin;
-            state.apiBaseUrl = url;
-            localStorage.setItem('voiceguard_api_url', url);
+            if (!url) {
+                try { localStorage.removeItem('voiceguard_api_url'); } catch (e) {}
+                state.apiBaseUrl = (typeof window.getVoiceGuardApiBaseUrl === 'function')
+                    ? window.getVoiceGuardApiBaseUrl()
+                    : 'https://fieldproj-v2.onrender.com';
+            } else {
+                state.apiBaseUrl = url;
+                try { localStorage.setItem('voiceguard_api_url', url); } catch (e) {}
+            }
             closeModal();
             checkBackendHealth();
         });
@@ -889,9 +905,9 @@ function initSettingsModal() {
         testBtn.addEventListener('click', async () => {
             testResult.textContent = 'Testing...';
             testResult.style.color = 'var(--text-muted)';
-            const testUrl = input.value.trim().replace(/\/+$/, '');
+            const testUrl = (input.value.trim().replace(/\/+$/, '')) || state.apiBaseUrl;
             try {
-                const resp = await fetch(`${testUrl}/health`, { signal: AbortSignal.timeout(3000) });
+                const resp = await fetch(`${testUrl}/health`, { signal: AbortSignal.timeout(4000) });
                 if (resp.ok) {
                     const data = await resp.json();
                     testResult.textContent = `✓ Connected (${data.model_name || "AASIST-L"})`;
