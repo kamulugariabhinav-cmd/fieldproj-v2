@@ -221,6 +221,27 @@
                     <span class="hint-text" id="result-status-hint">Awaiting audio input</span>
                 </div>
 
+                <!-- Non-blocking Analysis Notice / Error Banner -->
+                <div class="detection-error-banner" id="detection-error-banner" style="display: none;">
+                    <div class="detection-error-content">
+                        <div class="detection-error-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        <div class="detection-error-text">
+                            <h4 id="detection-error-title">Backend Connection Notice</h4>
+                            <p id="detection-error-msg"></p>
+                        </div>
+                    </div>
+                    <div class="detection-error-actions" id="detection-error-actions">
+                        <button class="btn-tiny btn-cyber" id="detection-error-retry-btn">Retry Detection</button>
+                        <button class="btn-tiny btn-cyber-secondary" id="detection-error-dismiss-btn">Dismiss</button>
+                    </div>
+                </div>
+
                 <!-- Analysis Progress State -->
                 <div class="progress-box" id="analysis-progress" style="display: none;">
                     <div class="cyber-spinner"></div>

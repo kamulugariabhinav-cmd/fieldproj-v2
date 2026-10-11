@@ -173,3 +173,105 @@ def test_backend_detect_accepts_audio_and_file_parameters():
     data = resp.json()
     assert data["status"] == "success"
     assert "prediction" in data
+
+
+def run_script_eval(js_code: str) -> str:
+    """Evaluates a snippet in Node with script.js loaded."""
+    script_file = REPO_ROOT / "script.js"
+    runner = f"""
+    const fs = require('fs');
+    global.window = {{
+        location: {{
+            hostname: 'fieldproj-v2.vercel.app',
+            protocol: 'https:',
+            origin: 'https://fieldproj-v2.vercel.app'
+        }}
+    }};
+    global.document = {{
+        getElementById: () => null,
+        addEventListener: () => null
+    }};
+    global.localStorage = {{
+        getItem: () => null,
+        setItem: () => null,
+        removeItem: () => null
+    }};
+
+    // Stub Three.js and navigator
+    global.THREE = {{}};
+    global.navigator = {{ mediaDevices: {{}} }};
+
+    const scriptSrc = fs.readFileSync({json.dumps(str(script_file))}, 'utf-8');
+    eval(scriptSrc);
+
+    {js_code}
+    """
+    res = subprocess.run(
+        ["node", "-e", runner],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+        check=True
+    )
+    return res.stdout.strip()
+
+
+def test_format_network_error_no_false_ad_blocker_on_generic_fetch_failure():
+    """Generic 'Failed to fetch' must NOT claim a browser extension / ad blocker is responsible."""
+    js = """
+    const err = new TypeError('Failed to fetch');
+    const msg = formatNetworkErrorMessage(err, 'https://fieldproj-v2.onrender.com');
+    console.log(JSON.stringify({ msg: msg }));
+    """
+    out = json.loads(run_script_eval(js))
+    msg = out["msg"]
+    assert "Request Filtered by Client" not in msg
+    assert "ad blocker" not in msg
+    assert "Render free-tier" in msg or "wake up" in msg
+
+
+def test_format_network_error_genuine_extension_filter():
+    """Only genuine ERR_BLOCKED_BY_CLIENT is attributed to client-side filtering."""
+    js = """
+    const err = new Error('net::ERR_BLOCKED_BY_CLIENT');
+    const msg = formatNetworkErrorMessage(err, 'https://fieldproj-v2.onrender.com');
+    console.log(JSON.stringify({ msg: msg }));
+    """
+    out = json.loads(run_script_eval(js))
+    assert "Request Filtered by Client" in out["msg"]
+
+
+def test_format_network_error_mixed_content():
+    """Mixed content warning is generated when HTTP is accessed from HTTPS."""
+    js = """
+    const err = new TypeError('Failed to fetch');
+    const msg = formatNetworkErrorMessage(err, 'http://my-insecure-backend.com');
+    console.log(JSON.stringify({ msg: msg }));
+    """
+    out = json.loads(run_script_eval(js))
+    assert "Mixed-Content Blocked" in out["msg"]
+
+
+def test_format_network_error_vercel_target():
+    """Warning is generated if the user mistakenly points to Vercel instead of FastAPI."""
+    js = """
+    const err = new TypeError('Failed to fetch');
+    const msg = formatNetworkErrorMessage(err, 'https://fieldproj-v2.vercel.app');
+    console.log(JSON.stringify({ msg: msg }));
+    """
+    out = json.loads(run_script_eval(js))
+    assert "Backend Unreachable" in out["msg"]
+    assert "only hosts static frontend files" in out["msg"]
+
+
+def test_backend_cors_preflight_for_vercel_origin():
+    """Verify backend returns required CORS headers for OPTIONS preflight from Vercel."""
+    headers = {
+        "Origin": "https://fieldproj-v2.vercel.app",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type"
+    }
+    resp = client.options("/api/detect", headers=headers)
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") == "https://fieldproj-v2.vercel.app"
+    assert "POST" in resp.headers.get("access-control-allow-methods", "")

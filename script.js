@@ -47,8 +47,9 @@ const state = {
     threshold: 0.50,
     modelName: 'AASIST-L',
     isAnalyzing: false,
+    isProbingHealth: false,
     consecutiveHealthFailures: 0,
-    isAdBlockFiltered: false,
+    healthTimerId: null,
     history: (function() {
         try { return JSON.parse(localStorage.getItem('voiceguard_history') || '[]'); } catch (e) { return []; }
     })()
@@ -71,16 +72,73 @@ function isMixedContentError(url) {
 function formatNetworkErrorMessage(err, url) {
     const targetUrl = url || state.apiBaseUrl;
     const msg = (err && err.message) ? err.message : String(err || '');
-    if (msg.includes('ERR_BLOCKED_BY_CLIENT') || msg.toLowerCase().includes('blocked by client') || msg.toLowerCase().includes('failed to fetch')) {
-        return `Request Filtered by Client: A browser extension (such as an ad blocker, privacy shield, or Brave Shield) may have blocked this request to ${targetUrl}. If using an ad blocker, consider adding an exception for ${targetUrl} or testing in Incognito mode. (${msg})`;
-    }
+    const lower = msg.toLowerCase();
+
+    // 1. Mixed Content: browser strictly blocks HTTP from HTTPS origin
     if (isMixedContentError(targetUrl)) {
         return `Mixed-Content Blocked: The frontend is loaded over HTTPS, but the backend URL is HTTP (${targetUrl}). Web browsers strictly block insecure HTTP requests from HTTPS sites. Please connect to an HTTPS backend (e.g. Render, Railway, or an HTTPS tunnel) or run both locally via http://localhost:3000.`;
     }
+
+    // 2. Pointing to static Vercel URL
     if (targetUrl.includes('.vercel.app')) {
         return `Backend Unreachable: The API URL is currently pointing to Vercel (${targetUrl}), which only hosts static frontend files. A separate Python FastAPI/PyTorch backend is required. Click the settings gear icon to configure your remote backend URL or set VITE_API_BASE_URL in Vercel.`;
     }
-    return `Could not connect to backend at ${targetUrl}. Please verify the server is running, publicly accessible, and has CORS allowed. (${msg || 'NetworkError'})`;
+
+    // 3. Genuine browser extension block (only when explicitly reported with ERR_BLOCKED_BY_CLIENT)
+    if (msg.includes('ERR_BLOCKED_BY_CLIENT') || lower.includes('blocked by client')) {
+        return `Request Filtered by Client: A browser extension or privacy rule blocked this request to ${targetUrl}. If using an ad blocker or privacy shield, consider adding an exception for ${targetUrl}.`;
+    }
+
+    // 4. Render cold-start / spin-up notice
+    if (targetUrl.includes('.onrender.com')) {
+        return `Backend Server Notice: Render free-tier instances spin down during periods of inactivity and require ~30-50 seconds to wake up on the first request. Please wait a moment and click Retry Detection.`;
+    }
+
+    // 5. Standard network connection error
+    return `Could not connect to backend at ${targetUrl}. Please verify the server is running, publicly accessible, and has CORS enabled. (${msg || 'NetworkError'})`;
+}
+
+function showDetectionError(title, message, canRetry, onRetry) {
+    if (canRetry === undefined) canRetry = true;
+    const banner = document.getElementById('detection-error-banner');
+    const titleEl = document.getElementById('detection-error-title');
+    const msgEl = document.getElementById('detection-error-msg');
+    const retryBtn = document.getElementById('detection-error-retry-btn');
+    const dismissBtn = document.getElementById('detection-error-dismiss-btn');
+    const hintEl = document.getElementById('result-status-hint');
+
+    if (!banner) return;
+
+    if (titleEl) titleEl.textContent = title || 'Detection Notice';
+    if (msgEl) msgEl.textContent = message || 'An unexpected issue occurred during audio analysis.';
+
+    if (retryBtn) {
+        if (canRetry) {
+            retryBtn.style.display = 'inline-block';
+            retryBtn.onclick = function() {
+                clearDetectionError();
+                if (typeof onRetry === 'function') {
+                    onRetry();
+                } else {
+                    runDetection();
+                }
+            };
+        } else {
+            retryBtn.style.display = 'none';
+        }
+    }
+
+    if (dismissBtn) {
+        dismissBtn.onclick = function() { clearDetectionError(); };
+    }
+
+    banner.style.display = 'flex';
+    if (hintEl) hintEl.textContent = 'Analysis issue - see notice';
+}
+
+function clearDetectionError() {
+    const banner = document.getElementById('detection-error-banner');
+    if (banner) banner.style.display = 'none';
 }
 
 // ==============================================================================
@@ -176,63 +234,72 @@ async function checkBackendHealth() {
     const statusDot = document.getElementById('status-dot');
     const statusLabel = document.getElementById('status-label');
 
+    // Prevent concurrent overlapping health probes
+    if (state.isProbingHealth) {
+        return true;
+    }
     // Suppress background health polling while deepfake analysis is actively computing
     if (state.isAnalyzing) {
         return true;
     }
 
+    state.isProbingHealth = true;
+
     let healthy = false;
     let data = null;
-    let isBlockedByClient = false;
 
-    // Try /api/health first (not blocked by ad-block filter lists), fallback to /health
+    // Try /api/health first, then /health with 10s timeout
     const probeEndpoints = [getApiEndpoint("/api/health"), getApiEndpoint("/health")];
 
     for (const probeUrl of probeEndpoints) {
         try {
-            const resp = await fetch(probeUrl, { signal: AbortSignal.timeout(6000) });
+            const resp = await fetch(probeUrl, { signal: AbortSignal.timeout(10000) });
             if (resp.ok) {
                 data = await resp.json();
                 healthy = true;
                 break;
             }
         } catch (e) {
-            const msg = (e && e.message) ? e.message.toLowerCase() : '';
-            if (msg.includes('blocked') || msg.includes('failed to fetch') || e.name === 'TypeError') {
-                isBlockedByClient = true;
-            }
+            // Fall through to probe fallback endpoint
         }
     }
 
+    state.isProbingHealth = false;
+
     if (healthy && data) {
         state.consecutiveHealthFailures = 0;
-        state.isAdBlockFiltered = false;
-        statusDot.className = 'status-dot online';
-        statusLabel.textContent = `Online: ${data.model_name || data.default_model || 'AASIST-L'}`;
-        statusPill.title = `Backend active at ${state.apiBaseUrl} (${data.device || 'cloud'})`;
+        if (statusDot) statusDot.className = 'status-dot online';
+        if (statusLabel) statusLabel.textContent = `Online: ${data.model_name || data.default_model || 'AASIST-L'}`;
+        if (statusPill) statusPill.title = `Backend active at ${state.apiBaseUrl} (${data.device || 'cloud'})`;
         return true;
     }
 
     state.consecutiveHealthFailures++;
 
-    // If client extension / ad blocker intercepted the probe, show informative status rather than 'offline'
-    if (isBlockedByClient) {
-        state.isAdBlockFiltered = true;
-        statusDot.className = 'status-dot warning';
-        statusLabel.textContent = 'Active (Protected)';
-        statusPill.title = `Health check was filtered by a browser extension (e.g. ad blocker or privacy shield) on ${state.apiBaseUrl}. The backend API remains operational for analysis.`;
-        return true;
-    }
-
-    // Require at least 2 consecutive failed attempts before declaring offline
-    if (state.consecutiveHealthFailures >= 2) {
-        statusDot.className = 'status-dot offline';
-        statusLabel.textContent = 'Backend Offline';
-        statusPill.title = `Cannot reach backend at ${state.apiBaseUrl}. Click gear icon to configure URL.`;
+    // Treat 1st and 2nd failed probe as "Status Unknown" / "Checking...", NOT "Backend Offline"
+    // Render free instances take ~30-50s to cold start, so a single timeout must not declare offline.
+    if (state.consecutiveHealthFailures < 3) {
+        if (statusDot) statusDot.className = 'status-dot warning';
+        if (statusLabel) statusLabel.textContent = 'Checking...';
+        if (statusPill) statusPill.title = `Probing backend at ${state.apiBaseUrl} (may be waking up from sleep)...`;
         return false;
     }
 
+    // Require at least 3 consecutive failed attempts before declaring offline
+    if (statusDot) statusDot.className = 'status-dot offline';
+    if (statusLabel) statusLabel.textContent = 'Backend Offline';
+    if (statusPill) statusPill.title = `Cannot reach backend at ${state.apiBaseUrl}. Click gear icon to configure URL.`;
     return false;
+}
+
+function scheduleNextHealthCheck() {
+    if (state.healthTimerId) clearTimeout(state.healthTimerId);
+    // Dynamic backoff: poll every 45s normally; if failing, back off to 90s to avoid hammering
+    const interval = state.consecutiveHealthFailures >= 2 ? 90000 : 45000;
+    state.healthTimerId = setTimeout(async () => {
+        await checkBackendHealth();
+        scheduleNextHealthCheck();
+    }, interval);
 }
 
 // ==============================================================================
@@ -505,6 +572,7 @@ function initAnalyzeHandler() {
 async function runDetection() {
     if (!state.audioBlob) return;
 
+    clearDetectionError();
     state.isAnalyzing = true;
     const analyzeBtn = document.getElementById('analyze-btn');
     const progressBox = document.getElementById('analysis-progress');
@@ -561,21 +629,40 @@ async function runDetection() {
         saveHistoryItem(result);
         if (hintEl) hintEl.textContent = 'Analysis complete';
 
+        // Successful detection confirms backend is fully operational!
+        state.consecutiveHealthFailures = 0;
+        const statusDot = document.getElementById('status-dot');
+        const statusLabel = document.getElementById('status-label');
+        if (statusDot) statusDot.className = 'status-dot online';
+        if (statusLabel) statusLabel.textContent = `Online: ${result.model_name || 'AASIST-L'}`;
+
     } catch (err) {
         progressBox.style.display = 'none';
         emptyBox.style.display = 'block';
+
         if (err.message && (err.message.includes('KEY_NOT_CONFIGURED') || err.message.includes('Authentication') || err.message.includes('API key'))) {
-            if (confirm(`External Model Notice: ${err.message}\n\nWould you like to switch to the local AASIST-L neural network and retry?`)) {
-                document.getElementById('model-select').value = 'AASIST-L';
-                state.modelName = 'AASIST-L';
-                state.isAnalyzing = false;
-                runDetection();
-                return;
-            }
+            showDetectionError(
+                'External Model Notice',
+                `${err.message} You can switch to the local AASIST-L neural network to run detection without API credentials.`,
+                true,
+                function() {
+                    const sel = document.getElementById('model-select');
+                    if (sel) sel.value = 'AASIST-L';
+                    state.modelName = 'AASIST-L';
+                    runDetection();
+                }
+            );
         } else {
-            alert(`Analysis Error:\n\n${formatNetworkErrorMessage(err, state.apiBaseUrl)}`);
+            const formatted = formatNetworkErrorMessage(err, state.apiBaseUrl);
+            const isRender = state.apiBaseUrl.includes('.onrender.com');
+            showDetectionError(
+                isRender ? 'Backend Connecting / Waking Up' : 'Detection Network Notice',
+                formatted,
+                true,
+                function() { runDetection(); }
+            );
         }
-        if (hintEl) hintEl.textContent = 'Error during analysis';
+        if (hintEl) hintEl.textContent = 'Analysis issue - see notice';
     } finally {
         state.isAnalyzing = false;
         analyzeBtn.disabled = false;
@@ -772,13 +859,15 @@ async function sendLiveChunk(blob) {
     const badgeEl = document.getElementById('live-verdict-badge');
     const scoreValEl = document.getElementById('live-score-val');
     const stateText = document.getElementById('live-state-text');
+    const stateDesc = document.getElementById('live-state-desc');
 
     state.liveWindowCount++;
-    counterEl.textContent = `Windows Analyzed: ${state.liveWindowCount}`;
-    stateText.textContent = 'ANALYZING WINDOW...';
+    if (counterEl) counterEl.textContent = `Windows Analyzed: ${state.liveWindowCount}`;
+    if (stateText) stateText.textContent = 'ANALYZING WINDOW...';
 
     const formData = new FormData();
     formData.append('audio', blob, 'live_chunk.webm');
+    formData.append('file', blob, 'live_chunk.webm');
     formData.append('threshold', state.threshold);
     formData.append('model_name', state.modelName);
 
@@ -789,33 +878,53 @@ async function sendLiveChunk(blob) {
             body: formData
         });
         const lat = Math.round(performance.now() - t0);
-        latencyEl.textContent = `Last Latency: ${lat} ms`;
+        if (latencyEl) latencyEl.textContent = `Last Latency: ${lat} ms`;
 
         if (resp.ok) {
             const data = await resp.json();
             const pct = Math.round(data.model_score * 100);
-            scoreValEl.textContent = `${pct}% (${data.risk_level} RISK)`;
+            if (scoreValEl) scoreValEl.textContent = `${pct}% (${data.risk_level} RISK)`;
 
             if (data.prediction === 'POSSIBLE_AI_VOICE') {
-                badgeEl.textContent = 'POSSIBLE AI VOICE';
-                badgeEl.style.background = 'rgba(255, 51, 102, 0.25)';
-                badgeEl.style.color = 'var(--crimson-danger)';
+                if (badgeEl) {
+                    badgeEl.textContent = 'POSSIBLE AI VOICE';
+                    badgeEl.style.background = 'rgba(255, 51, 102, 0.25)';
+                    badgeEl.style.color = 'var(--crimson-danger)';
+                }
                 updateThreeSphereColor(0xff3366);
             } else if (data.prediction === 'LIKELY_HUMAN_VOICE') {
-                badgeEl.textContent = 'LIKELY HUMAN';
-                badgeEl.style.background = 'rgba(0, 230, 118, 0.2)';
-                badgeEl.style.color = 'var(--emerald-green)';
+                if (badgeEl) {
+                    badgeEl.textContent = 'LIKELY HUMAN';
+                    badgeEl.style.background = 'rgba(0, 230, 118, 0.2)';
+                    badgeEl.style.color = 'var(--emerald-green)';
+                }
                 updateThreeSphereColor(0x00e676);
             } else {
-                badgeEl.textContent = 'INCONCLUSIVE';
-                badgeEl.style.background = 'rgba(255, 183, 3, 0.2)';
-                badgeEl.style.color = 'var(--amber-warning)';
+                if (badgeEl) {
+                    badgeEl.textContent = 'INCONCLUSIVE';
+                    badgeEl.style.background = 'rgba(255, 183, 3, 0.2)';
+                    badgeEl.style.color = 'var(--amber-warning)';
+                }
                 updateThreeSphereColor(0xffb703);
             }
-            stateText.textContent = 'MONITORING ACTIVE';
+            if (stateText) stateText.textContent = 'MONITORING ACTIVE';
+            if (stateDesc) stateDesc.textContent = 'Processing real-time speech streams with AASIST graph neural network.';
+
+            // Successful live chunk validates backend online!
+            state.consecutiveHealthFailures = 0;
+            const statusDot = document.getElementById('status-dot');
+            const statusLabel = document.getElementById('status-label');
+            if (statusDot) statusDot.className = 'status-dot online';
+            if (statusLabel) statusLabel.textContent = `Online: ${data.model_name || 'AASIST-L'}`;
+        } else {
+            if (stateText) stateText.textContent = 'SERVER BUSY (RETRYING)';
+            if (stateDesc) stateDesc.textContent = `Backend returned HTTP ${resp.status}. Retrying on next window...`;
+            if (latencyEl) latencyEl.textContent = `HTTP ${resp.status}`;
         }
     } catch (e) {
-        latencyEl.textContent = 'Network timeout';
+        if (stateText) stateText.textContent = 'RETRYING NEXT WINDOW...';
+        if (stateDesc) stateDesc.textContent = 'Connection timeout or backend waking up. Live monitor is continuing...';
+        if (latencyEl) latencyEl.textContent = 'Reconnecting...';
     }
 }
 
@@ -975,17 +1084,28 @@ function initSettingsModal() {
 
     if (testBtn) {
         testBtn.addEventListener('click', async () => {
-            testResult.textContent = 'Testing...';
+            testResult.textContent = 'Testing connection...';
             testResult.style.color = 'var(--text-muted)';
             const testUrl = (input.value.trim().replace(/\/+$/, '')) || state.apiBaseUrl;
             try {
-                const resp = await fetch(`${testUrl}/health`, { signal: AbortSignal.timeout(4000) });
-                if (resp.ok) {
-                    const data = await resp.json();
-                    testResult.textContent = `✓ Connected (${data.model_name || "AASIST-L"})`;
+                let ok = false;
+                let modelName = 'AASIST-L';
+                for (const probe of [`${testUrl}/api/health`, `${testUrl}/health`]) {
+                    try {
+                        const resp = await fetch(probe, { signal: AbortSignal.timeout(10000) });
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            ok = true;
+                            modelName = data.model_name || data.default_model || modelName;
+                            break;
+                        }
+                    } catch (err) {}
+                }
+                if (ok) {
+                    testResult.textContent = `✓ Connected (${modelName})`;
                     testResult.style.color = 'var(--emerald-green)';
                 } else {
-                    testResult.textContent = `✗ HTTP Error ${resp.status}`;
+                    testResult.textContent = `✗ Failed to connect`;
                     testResult.style.color = 'var(--crimson-danger)';
                 }
             } catch (e) {
@@ -1011,9 +1131,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadExternalProviders();
     renderHistoryTable();
 
-    // Check health once on startup, and every 15 seconds
-    checkBackendHealth();
-    setInterval(checkBackendHealth, 15000);
+    // Check health once on startup with adaptive backoff polling
+    checkBackendHealth().finally(() => scheduleNextHealthCheck());
 });
 
 
