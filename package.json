@@ -3,26 +3,6 @@
   "version": "2.0.0",
   "description": "VoiceGuard AI Deepfake & Anti-Spoofing Detection System",
   "scripts": {
-    "dev": "vite",
-    "build": "node build.js",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@samasante/liquid-glass": "^0.1.1",
-    "lucide-react": "^1.55.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "recharts": "^3.10.1"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.2",
-    "autoprefixer": "^10.6.1",
-    "postcss": "^8.5.29",
-    "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.4"
+    "build": "node build.js"
   }
 }
