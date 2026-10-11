@@ -13,6 +13,7 @@ Serves:
 
 import time
 import os
+import asyncio
 import logging
 from typing import Optional, List, Dict, Any
 from pathlib import Path
@@ -128,6 +129,8 @@ async def list_models():
 # ==============================================================================
 
 @app.get("/health")
+@app.get("/api/health")
+@app.get("/api/status")
 async def health_check():
     """Application health and default model readiness."""
     default_status, msg = get_model_status(DEFAULT_MODEL_NAME)
@@ -252,11 +255,15 @@ async def detect_audio(
     # 6. Run local inference
     try:
         detector = VoiceGuardDetector.get_instance(target_model)
-        result = detector.detect(
-            audio_bytes=content,
-            filename=filename,
-            model_name=target_model,
-            threshold=thresh
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(
+            None,
+            lambda: detector.detect(
+                audio_bytes=content,
+                filename=filename,
+                model_name=target_model,
+                threshold=thresh
+            )
         )
         result["filename"] = filename
         return JSONResponse(status_code=status.HTTP_200_OK, content=result)
@@ -341,10 +348,14 @@ async def compare_audio_models(
 
     try:
         detector = VoiceGuardDetector.get_instance(DEFAULT_MODEL_NAME)
-        comparison = detector.compare_models(
-            audio_bytes=content,
-            filename=filename,
-            threshold=thresh
+        loop = asyncio.get_running_loop()
+        comparison = await loop.run_in_executor(
+            None,
+            lambda: detector.compare_models(
+                audio_bytes=content,
+                filename=filename,
+                threshold=thresh
+            )
         )
         return JSONResponse(status_code=status.HTTP_200_OK, content=comparison)
     except AudioProcessingError as audio_err:

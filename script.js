@@ -46,7 +46,12 @@ const state = {
         })()),
     threshold: 0.50,
     modelName: 'AASIST-L',
-    history: JSON.parse(localStorage.getItem('voiceguard_history') || '[]')
+    isAnalyzing: false,
+    consecutiveHealthFailures: 0,
+    isAdBlockFiltered: false,
+    history: (function() {
+        try { return JSON.parse(localStorage.getItem('voiceguard_history') || '[]'); } catch (e) { return []; }
+    })()
 };
 
 // ==============================================================================
@@ -65,13 +70,17 @@ function isMixedContentError(url) {
 
 function formatNetworkErrorMessage(err, url) {
     const targetUrl = url || state.apiBaseUrl;
+    const msg = (err && err.message) ? err.message : String(err || '');
+    if (msg.includes('ERR_BLOCKED_BY_CLIENT') || msg.toLowerCase().includes('blocked by client') || msg.toLowerCase().includes('failed to fetch')) {
+        return `Request Filtered by Client: A browser extension (such as an ad blocker, privacy shield, or Brave Shield) may have blocked this request to ${targetUrl}. If using an ad blocker, consider adding an exception for ${targetUrl} or testing in Incognito mode. (${msg})`;
+    }
     if (isMixedContentError(targetUrl)) {
         return `Mixed-Content Blocked: The frontend is loaded over HTTPS, but the backend URL is HTTP (${targetUrl}). Web browsers strictly block insecure HTTP requests from HTTPS sites. Please connect to an HTTPS backend (e.g. Render, Railway, or an HTTPS tunnel) or run both locally via http://localhost:3000.`;
     }
     if (targetUrl.includes('.vercel.app')) {
         return `Backend Unreachable: The API URL is currently pointing to Vercel (${targetUrl}), which only hosts static frontend files. A separate Python FastAPI/PyTorch backend is required. Click the settings gear icon to configure your remote backend URL or set VITE_API_BASE_URL in Vercel.`;
     }
-    return `Could not connect to backend at ${targetUrl}. Please verify the server is running, publicly accessible, and has CORS allowed. (${err ? err.message || err : 'NetworkError'})`;
+    return `Could not connect to backend at ${targetUrl}. Please verify the server is running, publicly accessible, and has CORS allowed. (${msg || 'NetworkError'})`;
 }
 
 // ==============================================================================
@@ -167,22 +176,62 @@ async function checkBackendHealth() {
     const statusDot = document.getElementById('status-dot');
     const statusLabel = document.getElementById('status-label');
 
-    try {
-        const resp = await fetch(getApiEndpoint("/health"), { signal: AbortSignal.timeout(4000) });
-        if (resp.ok) {
-            const data = await resp.json();
-            statusDot.className = 'status-dot online';
-            statusLabel.textContent = `Online: ${data.model_name || 'AASIST-L'}`;
-            statusPill.title = `Backend active at ${state.apiBaseUrl} (${data.device})`;
-            return true;
-        }
-    } catch (e) {
-        // Backend not reached
+    // Suppress background health polling while deepfake analysis is actively computing
+    if (state.isAnalyzing) {
+        return true;
     }
 
-    statusDot.className = 'status-dot offline';
-    statusLabel.textContent = 'Backend Offline';
-    statusPill.title = `Cannot reach backend at ${state.apiBaseUrl}. Click gear icon to configure URL.`;
+    let healthy = false;
+    let data = null;
+    let isBlockedByClient = false;
+
+    // Try /api/health first (not blocked by ad-block filter lists), fallback to /health
+    const probeEndpoints = [getApiEndpoint("/api/health"), getApiEndpoint("/health")];
+
+    for (const probeUrl of probeEndpoints) {
+        try {
+            const resp = await fetch(probeUrl, { signal: AbortSignal.timeout(6000) });
+            if (resp.ok) {
+                data = await resp.json();
+                healthy = true;
+                break;
+            }
+        } catch (e) {
+            const msg = (e && e.message) ? e.message.toLowerCase() : '';
+            if (msg.includes('blocked') || msg.includes('failed to fetch') || e.name === 'TypeError') {
+                isBlockedByClient = true;
+            }
+        }
+    }
+
+    if (healthy && data) {
+        state.consecutiveHealthFailures = 0;
+        state.isAdBlockFiltered = false;
+        statusDot.className = 'status-dot online';
+        statusLabel.textContent = `Online: ${data.model_name || data.default_model || 'AASIST-L'}`;
+        statusPill.title = `Backend active at ${state.apiBaseUrl} (${data.device || 'cloud'})`;
+        return true;
+    }
+
+    state.consecutiveHealthFailures++;
+
+    // If client extension / ad blocker intercepted the probe, show informative status rather than 'offline'
+    if (isBlockedByClient) {
+        state.isAdBlockFiltered = true;
+        statusDot.className = 'status-dot warning';
+        statusLabel.textContent = 'Active (Protected)';
+        statusPill.title = `Health check was filtered by a browser extension (e.g. ad blocker or privacy shield) on ${state.apiBaseUrl}. The backend API remains operational for analysis.`;
+        return true;
+    }
+
+    // Require at least 2 consecutive failed attempts before declaring offline
+    if (state.consecutiveHealthFailures >= 2) {
+        statusDot.className = 'status-dot offline';
+        statusLabel.textContent = 'Backend Offline';
+        statusPill.title = `Cannot reach backend at ${state.apiBaseUrl}. Click gear icon to configure URL.`;
+        return false;
+    }
+
     return false;
 }
 
@@ -456,25 +505,37 @@ function initAnalyzeHandler() {
 async function runDetection() {
     if (!state.audioBlob) return;
 
+    state.isAnalyzing = true;
     const analyzeBtn = document.getElementById('analyze-btn');
     const progressBox = document.getElementById('analysis-progress');
     const emptyBox = document.getElementById('empty-results-box');
     const resultCard = document.getElementById('detection-result-card');
     const telemetryStep = document.getElementById('telemetry-step');
+    const hintEl = document.getElementById('result-status-hint');
 
     analyzeBtn.disabled = true;
     emptyBox.style.display = 'none';
     resultCard.style.display = 'none';
     progressBox.style.display = 'flex';
     telemetryStep.textContent = 'Uploading audio to AASIST backend...';
+    if (hintEl) hintEl.textContent = 'Deepfake neural inference running...';
+
+    // Ensure filename and valid extension
+    let fileName = state.selectedFile ? state.selectedFile.name : 'audio.wav';
+    if (!fileName.includes('.')) {
+        fileName += '.wav';
+    }
 
     const formData = new FormData();
-    formData.append('audio', state.audioBlob, state.selectedFile ? state.selectedFile.name : 'audio.wav');
+    formData.append('audio', state.audioBlob, fileName);
+    formData.append('file', state.audioBlob, fileName);
     formData.append('threshold', state.threshold);
     formData.append('model_name', state.modelName);
 
     try {
-        setTimeout(() => { telemetryStep.textContent = 'AASIST neural inference on spectro-temporal graphs...'; }, 200);
+        setTimeout(() => {
+            if (state.isAnalyzing) telemetryStep.textContent = 'AASIST neural inference on spectro-temporal graphs...';
+        }, 300);
 
         const resp = await fetch(getApiEndpoint("/api/detect"), {
             method: 'POST',
@@ -483,7 +544,14 @@ async function runDetection() {
 
         if (!resp.ok) {
             const errData = await resp.json().catch(() => ({}));
-            const errMsg = (errData.detail && errData.detail.message) || errData.message || `Server responded with ${resp.status}`;
+            let errMsg = `Server responded with ${resp.status}`;
+            if (typeof errData.detail === 'string') {
+                errMsg = errData.detail;
+            } else if (errData.detail && typeof errData.detail.message === 'string') {
+                errMsg = errData.detail.message;
+            } else if (typeof errData.message === 'string') {
+                errMsg = errData.message;
+            }
             throw new Error(errMsg);
         }
 
@@ -491,24 +559,28 @@ async function runDetection() {
         progressBox.style.display = 'none';
         renderDetectionResult(result);
         saveHistoryItem(result);
+        if (hintEl) hintEl.textContent = 'Analysis complete';
 
     } catch (err) {
         progressBox.style.display = 'none';
         emptyBox.style.display = 'block';
-        if (err.message.includes('KEY_NOT_CONFIGURED') || err.message.includes('Authentication') || err.message.includes('API key')) {
+        if (err.message && (err.message.includes('KEY_NOT_CONFIGURED') || err.message.includes('Authentication') || err.message.includes('API key'))) {
             if (confirm(`External Model Notice: ${err.message}\n\nWould you like to switch to the local AASIST-L neural network and retry?`)) {
                 document.getElementById('model-select').value = 'AASIST-L';
                 state.modelName = 'AASIST-L';
+                state.isAnalyzing = false;
                 runDetection();
                 return;
             }
         } else {
             alert(`Analysis Error:\n\n${formatNetworkErrorMessage(err, state.apiBaseUrl)}`);
         }
-        document.getElementById('result-status-hint').textContent = 'Error during analysis';
+        if (hintEl) hintEl.textContent = 'Error during analysis';
     } finally {
+        state.isAnalyzing = false;
         analyzeBtn.disabled = false;
-    const compareBtn = document.getElementById('compare-models-btn'); if (compareBtn) compareBtn.disabled = false;
+        const compareBtn = document.getElementById('compare-models-btn');
+        if (compareBtn) compareBtn.disabled = false;
     }
 }
 

@@ -54,3 +54,10 @@ Thumbs.db
 # Archives & Temporary
 *.zip
 scratch/
+
+# Large model weight files
+*.pth
+*.onnx
+ml/weights/
+backend/models/weights/
+

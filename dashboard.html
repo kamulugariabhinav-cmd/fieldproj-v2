@@ -153,7 +153,12 @@
     <script>
         // Load session stats from localStorage
         function loadDashboardStats() {
-            const history = JSON.parse(localStorage.getItem('voiceguard_history') || '[]');
+            let history = [];
+            try {
+                history = JSON.parse(localStorage.getItem('voiceguard_history') || '[]');
+            } catch (e) {
+                history = [];
+            }
             const total = history.length;
             let fakeCount = 0;
             let bonaCount = 0;

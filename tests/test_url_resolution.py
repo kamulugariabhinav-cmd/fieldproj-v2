@@ -138,3 +138,38 @@ def test_local_development_respects_custom_local_port():
     """
     out = run_node_eval(setup)
     assert out["resolvedUrl"] == "http://localhost:8080"
+
+
+from fastapi.testclient import TestClient
+from backend.app import app
+
+client = TestClient(app)
+
+def test_backend_api_health_route():
+    """Verify /api/health route responds with 200 and healthy status (ad-blocker-safe alternative)."""
+    resp = client.get("/api/health")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "healthy"
+    assert data["default_model"] == "AASIST-L"
+
+def test_backend_api_status_route():
+    """Verify /api/status route responds with 200 and healthy status."""
+    resp = client.get("/api/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "healthy"
+
+def test_backend_detect_accepts_audio_and_file_parameters():
+    """Verify /api/detect accepts both audio parameter and file parameter seamlessly."""
+    audio_file = REPO_ROOT / "tests" / "test_data" / "bonafide_001.wav"
+    with open(audio_file, "rb") as f:
+        resp = client.post(
+            "/api/detect",
+            files={"audio": ("bonafide_001.wav", f, "audio/wav")},
+            data={"threshold": 0.50, "model_name": "AASIST-L"}
+        )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "success"
+    assert "prediction" in data
