@@ -2,6 +2,7 @@
   "version": 2,
   "name": "voiceguard-frontend",
   "buildCommand": "node build.js",
+  "outputDirectory": ".",
   "cleanUrls": true,
   "headers": [
     {
