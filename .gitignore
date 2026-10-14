@@ -60,4 +60,9 @@ scratch/
 *.onnx
 ml/weights/
 backend/models/weights/
-
+test_voice.wav
+test_voice_converted.wav
+# Large local model checkpoints
+*.pth
+*.pt
+*.safetensors
