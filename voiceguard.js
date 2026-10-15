@@ -19,7 +19,7 @@ const firebaseConfig = {
   appId: "1:79100872827:web:ced9510ec6770e376afade"
 };
 
-const API_BASE = window.location.origin;
+const API_BASE = "https://territory-major-nodes-kathy.trycloudflare.com";
 
 const AI_THRESHOLD = 99.70488;
 
