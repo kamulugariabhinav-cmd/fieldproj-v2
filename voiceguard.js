@@ -19,7 +19,7 @@ const firebaseConfig = {
   appId: "1:79100872827:web:ced9510ec6770e376afade"
 };
 
-const API_BASE = "https://stakeholders-vocabulary-thumbnail-bands.trycloudflare.com";
+const API_BASE = "https://combining-vertical-leasing-skill.trycloudflare.com";
 
 const AI_THRESHOLD = 99.70488;
 
@@ -79,7 +79,7 @@ function setPage(name) {
 
   if (name === "history") renderHistory();
 
-  window.scrollTo({top: 0, behavior: reducedMotion ? "instant" : "smooth"});
+  window.scrollTo({ top: 0, behavior: reducedMotion ? "instant" : "smooth" });
 
 }
 
@@ -99,7 +99,7 @@ async function checkServer() {
 
   try {
 
-    const response = await fetch(`${API_BASE}/health`, {cache: "no-store", signal: controller.signal});
+    const response = await fetch(`${API_BASE}/health`, { cache: "no-store", signal: controller.signal });
 
     if (!response.ok) throw Error(`HTTP ${response.status}`);
 
@@ -221,11 +221,11 @@ $("resetBtn").addEventListener("click", resetApplication);
 
 const dropzone = $("dropzone");
 
-dropzone.addEventListener("dragover", e => {e.preventDefault();dropzone.classList.add("dragover");});
+dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("dragover"); });
 
 dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
 
-dropzone.addEventListener("drop", e => {e.preventDefault();dropzone.classList.remove("dragover");selectFile(e.dataTransfer.files[0]);});
+dropzone.addEventListener("drop", e => { e.preventDefault(); dropzone.classList.remove("dragover"); selectFile(e.dataTransfer.files[0]); });
 
 function switchTab(record) {
 
@@ -267,7 +267,7 @@ function ensureAudioContext() {
 
   }
 
-  if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
+  if (audioContext.state === "suspended") audioContext.resume().catch(() => { });
 
 }
 
@@ -317,7 +317,7 @@ async function startRecording() {
 
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw Error("Recording is unsupported in this browser.");
 
-    microphoneStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
     ensureAudioContext();
 
@@ -333,13 +333,13 @@ async function startRecording() {
 
     const mime = types.find(t => MediaRecorder.isTypeSupported(t));
 
-    mediaRecorder = new MediaRecorder(microphoneStream, mime ? {mimeType:mime} : undefined);
+    mediaRecorder = new MediaRecorder(microphoneStream, mime ? { mimeType: mime } : undefined);
 
     const recorder = mediaRecorder;
 
     const chunks = [];
 
-    recorder.addEventListener("dataavailable", e => {if (e.data.size) chunks.push(e.data);});
+    recorder.addEventListener("dataavailable", e => { if (e.data.size) chunks.push(e.data); });
 
     recorder.addEventListener("stop", () => {
 
@@ -349,9 +349,9 @@ async function startRecording() {
 
       stopMicrophone();
 
-      selectFile(new File([new Blob(chunks,{type})], `voiceguard-recording.${ext}`, {type}));
+      selectFile(new File([new Blob(chunks, { type })], `voiceguard-recording.${ext}`, { type }));
 
-    }, {once:true});
+    }, { once: true });
 
     recorder.start();
 
@@ -361,7 +361,7 @@ async function startRecording() {
 
       const s = Math.floor((Date.now() - recordingStart) / 1000);
 
-      $("recordTimer").textContent = `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+      $("recordTimer").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
     }, 250);
 
@@ -463,7 +463,7 @@ function showResult(data) {
 
   $("resultContent").classList.remove("hidden");
 
-  return {score, ai};
+  return { score, ai };
 
 }
 
@@ -509,7 +509,7 @@ async function analyzeAudio() {
 
     form.append("model", $("modelSelect").value);
 
-    const response = await fetch(`${API_BASE}/api/detect`, {method:"POST", body:form});
+    const response = await fetch(`${API_BASE}/api/detect`, { method: "POST", body: form });
 
     const data = await response.json().catch(() => ({}));
 
@@ -523,7 +523,7 @@ async function analyzeAudio() {
 
     const result = showResult(data);
 
-    saveHistory({id:crypto.randomUUID(),date:new Date().toISOString(),filename:file.name,model:data.model_name,score:result.score,prediction:result.ai ? "AI Detected" : "Human Detected"});
+    saveHistory({ id: crypto.randomUUID(), date: new Date().toISOString(), filename: file.name, model: data.model_name, score: result.score, prediction: result.ai ? "AI Detected" : "Human Detected" });
 
     message(`Analysis completed using ${data.model_name}.`);
 
@@ -575,9 +575,9 @@ function getHistory() {
 
 function saveHistory(record) {
 
-  try {localStorage.setItem(historyKey(), JSON.stringify([record, ...getHistory()].slice(0,100)));}
+  try { localStorage.setItem(historyKey(), JSON.stringify([record, ...getHistory()].slice(0, 100))); }
 
-  catch {message("Scan completed, but browser history could not be saved.", true);}
+  catch { message("Scan completed, but browser history could not be saved.", true); }
 
 }
 
@@ -619,7 +619,7 @@ function renderHistory() {
 
     const date = document.createElement("small"); date.textContent = new Date(r.date).toLocaleString();
 
-    file.append(name,date);
+    file.append(name, date);
 
     const model = document.createElement("div"); model.textContent = r.model;
 
@@ -639,7 +639,7 @@ function renderHistory() {
 
     });
 
-    row.append(file,model,score,verdict,remove); list.appendChild(row);
+    row.append(file, model, score, verdict, remove); list.appendChild(row);
 
   }
 
@@ -651,13 +651,13 @@ $("historyFilter").addEventListener("change", renderHistory);
 
 $("clearHistory").addEventListener("click", () => {
 
-  if (confirm("Delete all locally stored history for this profile?")) {localStorage.removeItem(historyKey());renderHistory();}
+  if (confirm("Delete all locally stored history for this profile?")) { localStorage.removeItem(historyKey()); renderHistory(); }
 
 });
 
 $("exportHistory").addEventListener("click", () => {
 
-  const blob = new Blob([JSON.stringify(getHistory(),null,2)], {type:"application/json"});
+  const blob = new Blob([JSON.stringify(getHistory(), null, 2)], { type: "application/json" });
 
   const url = URL.createObjectURL(blob);
 
@@ -713,7 +713,7 @@ function setupFirebase() {
 
   }
 
-  if (!window.firebase?.auth) {$("authMessage").textContent = "Firebase SDK failed to load. Check your internet connection.";return;}
+  if (!window.firebase?.auth) { $("authMessage").textContent = "Firebase SDK failed to load. Check your internet connection."; return; }
 
   try {
 
@@ -729,23 +729,23 @@ function setupFirebase() {
 
     });
 
-  } catch (e) {$("authMessage").textContent = `Firebase setup error: ${e.message}`;}
+  } catch (e) { $("authMessage").textContent = `Firebase setup error: ${e.message}`; }
 
 }
 
 $("googleLogin").addEventListener("click", async () => {
 
-  if (!auth) {$("authMessage").textContent = "Configure Firebase first.";return;}
+  if (!auth) { $("authMessage").textContent = "Configure Firebase first."; return; }
 
-  try {await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());}
+  try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-  catch (e) {$("authMessage").textContent = `Sign-in failed: ${e.message}`;}
+  catch (e) { $("authMessage").textContent = `Sign-in failed: ${e.message}`; }
 
 });
 
 $("signOut").addEventListener("click", async () => {
 
-  try {await auth?.signOut();} catch (e) {$("authMessage").textContent = `Sign-out failed: ${e.message}`;}
+  try { await auth?.signOut(); } catch (e) { $("authMessage").textContent = `Sign-out failed: ${e.message}`; }
 
 });
 
@@ -761,17 +761,17 @@ async function setup3D() {
 
     const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js");
 
-    const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 
-    renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
-    renderer.setClearColor(0x000000,0);
+    renderer.setClearColor(0x000000, 0);
 
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(40,1,.1,100);
+    const camera = new THREE.PerspectiveCamera(40, 1, .1, 100);
 
     camera.position.z = 7.8;
 
@@ -793,13 +793,13 @@ async function setup3D() {
 
       geometry.setAttribute("position", new THREE.BufferAttribute(points, 3));
 
-      const material = new THREE.LineBasicMaterial({color: colors[layer % colors.length], transparent:true, opacity:.25 + (layer % 5)*.09});
+      const material = new THREE.LineBasicMaterial({ color: colors[layer % colors.length], transparent: true, opacity: .25 + (layer % 5) * .09 });
 
       const line = new THREE.Line(geometry, material);
 
       group.add(line);
 
-      waveLines.push({line, layer, points});
+      waveLines.push({ line, layer, points });
 
     }
 
@@ -807,27 +807,27 @@ async function setup3D() {
 
       const energy = scanning ? 1.8 : .8;
 
-      for (const {line, layer, points} of waveLines) {
+      for (const { line, layer, points } of waveLines) {
 
-        const depth = (layer - 12.5)*.11;
+        const depth = (layer - 12.5) * .11;
 
-        for (let i=0;i<samples;i++) {
+        for (let i = 0; i < samples; i++) {
 
-          const x=(i/(samples-1)-.5)*7.2;
+          const x = (i / (samples - 1) - .5) * 7.2;
 
-          const envelope=Math.pow(Math.max(0,1-Math.abs(x)/4),1.4);
+          const envelope = Math.pow(Math.max(0, 1 - Math.abs(x) / 4), 1.4);
 
-          const y=Math.sin(x*1.65+t*1.2+layer*.19)*Math.cos(x*.75-t*.48+layer*.16)*envelope*energy;
+          const y = Math.sin(x * 1.65 + t * 1.2 + layer * .19) * Math.cos(x * .75 - t * .48 + layer * .16) * envelope * energy;
 
-          points[i*3]=x;
+          points[i * 3] = x;
 
-          points[i*3+1]=y+Math.sin(layer*.3+t*.3)*.1;
+          points[i * 3 + 1] = y + Math.sin(layer * .3 + t * .3) * .1;
 
-          points[i*3+2]=depth+Math.sin(x*.6+t*.55)*.25;
+          points[i * 3 + 2] = depth + Math.sin(x * .6 + t * .55) * .25;
 
         }
 
-        line.geometry.attributes.position.needsUpdate=true;
+        line.geometry.attributes.position.needsUpdate = true;
 
       }
 
@@ -835,29 +835,29 @@ async function setup3D() {
 
     const stage = $("coreStage");
 
-    let drag=false,px=0,py=0,spin=true,zoom=7.8;
+    let drag = false, px = 0, py = 0, spin = true, zoom = 7.8;
 
-    stage.addEventListener("pointerdown",e=>{drag=true;px=e.clientX;py=e.clientY;stage.setPointerCapture(e.pointerId);});
+    stage.addEventListener("pointerdown", e => { drag = true; px = e.clientX; py = e.clientY; stage.setPointerCapture(e.pointerId); });
 
-    stage.addEventListener("pointerup",()=>drag=false);
+    stage.addEventListener("pointerup", () => drag = false);
 
-    stage.addEventListener("pointercancel",()=>drag=false);
+    stage.addEventListener("pointercancel", () => drag = false);
 
-    stage.addEventListener("pointermove",e=>{if(!drag)return;group.rotation.y+=(e.clientX-px)*.009;group.rotation.x+=(e.clientY-py)*.009;px=e.clientX;py=e.clientY;});
+    stage.addEventListener("pointermove", e => { if (!drag) return; group.rotation.y += (e.clientX - px) * .009; group.rotation.x += (e.clientY - py) * .009; px = e.clientX; py = e.clientY; });
 
-    stage.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(4.5,Math.min(12,zoom+e.deltaY*.008));camera.position.z=zoom;},{passive:false});
+    stage.addEventListener("wheel", e => { e.preventDefault(); zoom = Math.max(4.5, Math.min(12, zoom + e.deltaY * .008)); camera.position.z = zoom; }, { passive: false });
 
-    $("resetCore").addEventListener("click",()=>{group.rotation.set(0,0,0);zoom=7.8;camera.position.z=zoom;});
+    $("resetCore").addEventListener("click", () => { group.rotation.set(0, 0, 0); zoom = 7.8; camera.position.z = zoom; });
 
-    $("toggleSpin").addEventListener("click",()=>{spin=!spin;$("toggleSpin").textContent=spin?"Ⅱ Pause Rotation":"▶ Resume Rotation";});
+    $("toggleSpin").addEventListener("click", () => { spin = !spin; $("toggleSpin").textContent = spin ? "Ⅱ Pause Rotation" : "▶ Resume Rotation"; });
 
-    function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
+    function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 
-    const observer=new ResizeObserver(resize);observer.observe(stage);resize();
+    const observer = new ResizeObserver(resize); observer.observe(stage); resize();
 
-    const clock=new THREE.Clock();
+    const clock = new THREE.Clock();
 
-    function frame(){requestAnimationFrame(frame);const t=clock.getElapsedTime();if(spin&&!drag&&!reducedMotion)group.rotation.y+=scanning?.018:.003;updateWaves(t);renderer.render(scene,camera);}
+    function frame() { requestAnimationFrame(frame); const t = clock.getElapsedTime(); if (spin && !drag && !reducedMotion) group.rotation.y += scanning ? .018 : .003; updateWaves(t); renderer.render(scene, camera); }
 
     frame();
 
@@ -867,9 +867,9 @@ async function setup3D() {
 
     $("coreFallback").textContent = "3D unavailable: check WebGL and your internet connection. Audio detection remains usable.";
 
-    $("resetCore").disabled = true;$("toggleSpin").disabled = true;
+    $("resetCore").disabled = true; $("toggleSpin").disabled = true;
 
-    console.warn("3D renderer unavailable:",e);
+    console.warn("3D renderer unavailable:", e);
 
   }
 
@@ -879,7 +879,7 @@ async function setup3D() {
 
 // Live voice detection: consecutive microphone samples sent to existing FastAPI.
 
-let liveActive=false, liveToken=0, liveStream=null, liveRecorder=null, liveController=null, liveCount=0, liveMicSource=null, liveWaveRaf=null;
+let liveActive = false, liveToken = 0, liveStream = null, liveRecorder = null, liveController = null, liveCount = 0, liveMicSource = null, liveWaveRaf = null;
 
 
 
@@ -925,87 +925,87 @@ function updateLiveWaveBars() {
 
 
 
-function liveUI(active,text){
+function liveUI(active, text) {
 
-  document.querySelector(".live-panel").classList.toggle("is-live",active);
+  document.querySelector(".live-panel").classList.toggle("is-live", active);
 
-  $("startLive").disabled=active;$("stopLive").disabled=!active;
+  $("startLive").disabled = active; $("stopLive").disabled = !active;
 
-  $("modelSelect").disabled=active;
+  $("modelSelect").disabled = active;
 
-  $("liveBadge").textContent=active?"MIC ACTIVE":"OFFLINE";
+  $("liveBadge").textContent = active ? "MIC ACTIVE" : "OFFLINE";
 
-  $("listeningText").textContent=active?"Listening...":"Ready to listen";
+  $("listeningText").textContent = active ? "Listening..." : "Ready to listen";
 
-  $("liveStatus").textContent=text;
+  $("liveStatus").textContent = text;
 
 }
 
-function stopLive(){
+function stopLive() {
 
-  liveActive=false;liveToken++;
+  liveActive = false; liveToken++;
 
-  if(liveWaveRaf) { cancelAnimationFrame(liveWaveRaf); liveWaveRaf = null; }
+  if (liveWaveRaf) { cancelAnimationFrame(liveWaveRaf); liveWaveRaf = null; }
 
-  if(liveMicSource) { try { liveMicSource.disconnect(); } catch(e){} liveMicSource = null; }
+  if (liveMicSource) { try { liveMicSource.disconnect(); } catch (e) { } liveMicSource = null; }
 
   document.querySelectorAll("#liveAudioWaves span").forEach(s => s.style.transform = "");
 
-  if(liveRecorder?.state==="recording")liveRecorder.stop();
+  if (liveRecorder?.state === "recording") liveRecorder.stop();
 
-  liveRecorder=null;
+  liveRecorder = null;
 
-  if(liveController)liveController.abort();liveController=null;
+  if (liveController) liveController.abort(); liveController = null;
 
-  if(liveStream)liveStream.getTracks().forEach(t=>t.stop());liveStream=null;
+  if (liveStream) liveStream.getTracks().forEach(t => t.stop()); liveStream = null;
 
-  scanning=false;$("coreState").textContent="STANDBY";
+  scanning = false; $("coreState").textContent = "STANDBY";
 
-  liveUI(false,"Microphone stopped.");
+  liveUI(false, "Microphone stopped.");
 
 }
 
-function recordChunk(stream,token){
+function recordChunk(stream, token) {
 
-  const types=["audio/webm;codecs=opus","audio/webm","audio/mp4"];
+  const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
 
-  const mime=types.find(t=>MediaRecorder.isTypeSupported(t));
+  const mime = types.find(t => MediaRecorder.isTypeSupported(t));
 
-  const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+  const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
 
-  liveRecorder=recorder;
+  liveRecorder = recorder;
 
-  return new Promise((resolve,reject)=>{
+  return new Promise((resolve, reject) => {
 
-    const chunks=[];let timer;
+    const chunks = []; let timer;
 
-    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
 
-    recorder.onerror=e=>{clearTimeout(timer);reject(Error(e.error?.message||"Microphone recording failed"));};
+    recorder.onerror = e => { clearTimeout(timer); reject(Error(e.error?.message || "Microphone recording failed")); };
 
-    recorder.onstop=()=>{clearTimeout(timer);resolve(liveActive&&token===liveToken?new Blob(chunks,{type:recorder.mimeType||mime||"audio/webm"}):null);};
+    recorder.onstop = () => { clearTimeout(timer); resolve(liveActive && token === liveToken ? new Blob(chunks, { type: recorder.mimeType || mime || "audio/webm" }) : null); };
 
-    recorder.start();timer=setTimeout(()=>{if(recorder.state==="recording")recorder.stop();},6000);
+    recorder.start(); timer = setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, 6000);
 
   });
 
 }
 
-async function startLive(){
+async function startLive() {
 
-  if(liveActive||busy||mediaRecorder?.state==="recording")return;
+  if (liveActive || busy || mediaRecorder?.state === "recording") return;
 
-  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){liveUI(false,"Microphone recording unsupported.");return;}
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { liveUI(false, "Microphone recording unsupported."); return; }
 
-  const token=++liveToken;
+  const token = ++liveToken;
 
-  try{
+  try {
 
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    if(token!==liveToken){stream.getTracks().forEach(t=>t.stop());return;}
+    if (token !== liveToken) { stream.getTracks().forEach(t => t.stop()); return; }
 
-    liveStream=stream;liveActive=true;liveCount=0;$("liveCount").textContent="0 samples";
+    liveStream = stream; liveActive = true; liveCount = 0; $("liveCount").textContent = "0 samples";
 
     ensureAudioContext();
 
@@ -1023,75 +1023,75 @@ async function startLive(){
 
     updateLiveWaveBars();
 
-    liveUI(true,"Recording a 6-second sample...");
+    liveUI(true, "Recording a 6-second sample...");
 
-    while(liveActive&&token===liveToken){
+    while (liveActive && token === liveToken) {
 
-      const blob=await recordChunk(stream,token);
+      const blob = await recordChunk(stream, token);
 
-      if(!blob||!liveActive||token!==liveToken)break;
+      if (!blob || !liveActive || token !== liveToken) break;
 
-      if(blob.size>MAX_FILE_SIZE)throw Error("Sample too large");
+      if (blob.size > MAX_FILE_SIZE) throw Error("Sample too large");
 
-      scanning=true;$("coreMode").textContent="LIVE SCAN";$("coreState").textContent="INFERENCE";
+      scanning = true; $("coreMode").textContent = "LIVE SCAN"; $("coreState").textContent = "INFERENCE";
 
-      $("liveStatus").textContent="Analyzing microphone sample on server...";
+      $("liveStatus").textContent = "Analyzing microphone sample on server...";
 
-      const ext=blob.type.includes("mp4")?"m4a":"webm";
+      const ext = blob.type.includes("mp4") ? "m4a" : "webm";
 
-      const form=new FormData();form.append("audio",blob,`live-sample.${ext}`);form.append("model",$("modelSelect").value);
+      const form = new FormData(); form.append("audio", blob, `live-sample.${ext}`); form.append("model", $("modelSelect").value);
 
-      liveController=new AbortController();
+      liveController = new AbortController();
 
-      const response=await fetch(`${API_BASE}/api/detect`,{method:"POST",body:form,signal:liveController.signal});
+      const response = await fetch(`${API_BASE}/api/detect`, { method: "POST", body: form, signal: liveController.signal });
 
-      const data=await response.json().catch(()=>({}));liveController=null;
+      const data = await response.json().catch(() => ({})); liveController = null;
 
-      if(!liveActive||token!==liveToken)break;
+      if (!liveActive || token !== liveToken) break;
 
-      if(!response.ok){const d=data.detail;throw Error(typeof d==="string"?d:d?.message||data.message||`HTTP ${response.status}`);}
+      if (!response.ok) { const d = data.detail; throw Error(typeof d === "string" ? d : d?.message || data.message || `HTTP ${response.status}`); }
 
-      const result=showResult(data);liveCount++;
+      const result = showResult(data); liveCount++;
 
-      $("liveCount").textContent=`${liveCount} sample${liveCount===1?"":"s"}`;
+      $("liveCount").textContent = `${liveCount} sample${liveCount === 1 ? "" : "s"}`;
 
-      $("liveStatus").textContent=`${result.ai?"AI":"Human"} indication · ${result.score.toFixed(2)}% AI score · listening again...`;
+      $("liveStatus").textContent = `${result.ai ? "AI" : "Human"} indication · ${result.score.toFixed(2)}% AI score · listening again...`;
 
-      $("coreMode").textContent=result.ai?"AI SIGNAL":"HUMAN SIGNAL";
+      $("coreMode").textContent = result.ai ? "AI SIGNAL" : "HUMAN SIGNAL";
 
-      saveHistory({id:crypto.randomUUID(),date:new Date().toISOString(),filename:`Live sample ${liveCount}`,model:data.model_name,score:result.score,prediction:result.ai?"AI Detected":"Human Detected"});
+      saveHistory({ id: crypto.randomUUID(), date: new Date().toISOString(), filename: `Live sample ${liveCount}`, model: data.model_name, score: result.score, prediction: result.ai ? "AI Detected" : "Human Detected" });
 
-      scanning=false;
+      scanning = false;
 
     }
 
-  }catch(error){if(token===liveToken){$("liveStatus").textContent=`Stopped: ${error.message}`;message(`Live detection error: ${error.message}`,true);}}
+  } catch (error) { if (token === liveToken) { $("liveStatus").textContent = `Stopped: ${error.message}`; message(`Live detection error: ${error.message}`, true); } }
 
-  finally{if(token===liveToken){const errorText=$("liveStatus").textContent;stopLive();if(errorText.startsWith("Stopped:"))$("liveStatus").textContent=errorText;}}
+  finally { if (token === liveToken) { const errorText = $("liveStatus").textContent; stopLive(); if (errorText.startsWith("Stopped:")) $("liveStatus").textContent = errorText; } }
 
 }
 
-$("startLive").addEventListener("click",startLive);
+$("startLive").addEventListener("click", startLive);
 
-$("stopLive").addEventListener("click",stopLive);
+$("stopLive").addEventListener("click", stopLive);
 
-window.addEventListener("beforeunload",stopLive);
+window.addEventListener("beforeunload", stopLive);
 
-$("brandToggle").addEventListener("click",()=>{
+$("brandToggle").addEventListener("click", () => {
 
-  if(matchMedia("(max-width:760px)").matches){
+  if (matchMedia("(max-width:760px)").matches) {
 
     $("sidebar").classList.toggle("open");
 
-    $("brandToggle").setAttribute("aria-expanded",String($("sidebar").classList.contains("open")));
+    $("brandToggle").setAttribute("aria-expanded", String($("sidebar").classList.contains("open")));
 
-  }else{
+  } else {
 
-    const collapsed=document.querySelector(".app-shell").classList.toggle("sidebar-collapsed");
+    const collapsed = document.querySelector(".app-shell").classList.toggle("sidebar-collapsed");
 
-    $("brandToggle").setAttribute("aria-expanded",String(!collapsed));
+    $("brandToggle").setAttribute("aria-expanded", String(!collapsed));
 
-    $("brandToggle").setAttribute("aria-label",collapsed?"Expand sidebar":"Collapse sidebar");
+    $("brandToggle").setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar");
 
   }
 
@@ -1221,7 +1221,7 @@ function setupLiquidBackground() {
 
       for (let x = 0; x <= width; x += 16) {
 
-        const y = baseY + 
+        const y = baseY +
 
           Math.sin(x * wave.length + step * wave.speed + w * 1.5) * wave.amp +
 
@@ -1386,13 +1386,13 @@ function emailCredentials() {
   const email = $("emailAuthEmail").value.trim();
   const password = $("emailAuthPassword").value;
   if (!email || !password) throw new Error("Enter an email address and password.");
-  return {email, password};
+  return { email, password };
 }
 emailForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!auth) return showEmailMessage("Firebase is not configured yet.");
   try {
-    const {email, password} = emailCredentials();
+    const { email, password } = emailCredentials();
     await auth.signInWithEmailAndPassword(email, password);
     showEmailMessage("Signed in successfully.");
     closeWelcome();
@@ -1401,7 +1401,7 @@ emailForm.addEventListener("submit", async (event) => {
 $("emailRegister").addEventListener("click", async () => {
   if (!auth) return showEmailMessage("Firebase is not configured yet.");
   try {
-    const {email, password} = emailCredentials();
+    const { email, password } = emailCredentials();
     const result = await auth.createUserWithEmailAndPassword(email, password);
     await result.user.sendEmailVerification();
     showEmailMessage("Account created! Check your inbox to verify your email.");
