@@ -1,0 +1,85 @@
+# VoiceGuard Git Ignore Rules
+﻿# Python artifacts
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Node modules
+node_modules/
+
+# Pytest / Coverage / Logs
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Environment files & secrets
+.env
+.env.local
+.env.*.local
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Archives & Temporary
+*.zip
+scratch/
+
+# Large model weight files
+*.pth
+*.onnx
+ml/weights/
+backend/models/weights/
+test_voice.wav
+test_voice_converted.wav
+# Large local model checkpoints
+*.pth
+*.pt
+*.safetensors
+
+# Local user data, generated previews and machine-specific configuration
+*.sqlite*
+*.db
+output/
+.21st/
+voiceguard_addon/export_runtime.json
+
+# Audio recordings and local test datasets
+*.wav
+*.mp3
+*.flac
+*.webm
+*.m4a
+*.aac
+*.mp4
+*.ogg

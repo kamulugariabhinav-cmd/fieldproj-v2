@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <meta name="theme-color" content="#080715">
+
+  <meta name="description" content="Look beyond the sound. Explore VoiceGuard, an experimental AI-powered speech deepfake detection and audio forensics workspace.">
+
+  <title>VoiceGuard | Look beyond the sound</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js" defer></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js" defer></script>
+
+  <script src="voiceguard.js" defer></script>
+
+</head>
+
+<body>
+
+  <div class="ambient" aria-hidden="true"></div>
+
+  <div class="liquid-stream" aria-hidden="true"></div>
+
+  <canvas id="liquidCanvas" class="liquid-canvas" aria-hidden="true"></canvas>
+
+  <div class="mesh-background" aria-hidden="true"></div>
+
+
+
+  <section class="vg-home" id="welcomeScreen" aria-label="VoiceGuard homepage">
+    <a class="vg-skip" href="#vg-main">Skip to content</a>
+    <header class="vg-header">
+      <a href="#vg-main" class="vg-brand" aria-label="VoiceGuard home"><span class="vg-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>voiceguard<span class="vg-brand-dot">.</span></a>
+      <button class="vg-menu" id="vgMenu" aria-label="Open navigation" aria-expanded="false" aria-controls="vgNav">Menu <span aria-hidden="true">☰</span></button>
+      <nav id="vgNav" aria-label="Homepage navigation"><a href="#vg-platform">The platform</a><a href="#vg-how">How it works</a><a href="#vg-about">About</a><a href="#vg-faq">FAQs</a></nav>
+      <button class="vg-signin" data-vg-login>Sign in <span aria-hidden="true">↗</span></button>
+    </header>
+    <main id="vg-main">
+      <section class="vg-hero vg-wrap" aria-labelledby="welcomeTitle">
+        <div class="vg-hero-copy"><p class="vg-eyebrow"><span class="vg-status-dot"></span> THE NEXT WAVE OF VOICE DEFENSE</p><h1 id="welcomeTitle">Sounds human.<br>But is it <em>real?</em></h1><p class="vg-intro">In a world of cloned voices, trust what’s beneath the surface. Explore AI-powered speech forensics with VoiceGuard.</p><div class="vg-actions"><button class="vg-button" data-vg-login>Start your analysis <span aria-hidden="true">↗</span></button><a class="vg-text-link" href="#vg-how">See how it works <span aria-hidden="true">↓</span></a></div><p class="vg-hero-note">A research project in audio authenticity.</p></div>
+        <div class="vg-signal-art" aria-hidden="true"><div class="vg-art-grid"></div><div class="vg-orbit vg-orbit-one"></div><div class="vg-orbit vg-orbit-two"></div><div class="vg-orbit vg-orbit-three"></div><div class="vg-art-label">VOICE SIGNAL / UNDER THE SURFACE</div><div class="vg-wave-sculpture" id="vgSculpture"></div><div class="vg-signal-tag"><span class="vg-status-dot"></span> SIGNAL INTELLIGENCE</div><div class="vg-art-coordinate">VG—02 <span>01 : 48 : 09</span></div></div>
+        <div class="vg-hero-bottom"><span>HEAR BEYOND THE IMITATION</span><a href="#vg-platform" aria-label="Explore the VoiceGuard platform">SCROLL TO EXPLORE <span aria-hidden="true">↓</span></a></div>
+      </section>
+      <div class="vg-capability-strip"><span>Speech anti-spoofing</span><i aria-hidden="true">✳</i><span>Audio forensics</span><i aria-hidden="true">✳</i><span>Multi-model analysis</span><i aria-hidden="true">✳</i><span>Human-centered research</span></div>
+      <section class="vg-wrap vg-section" id="vg-platform"><div class="vg-section-heading"><p class="vg-eyebrow">01 / THE PLATFORM</p><h2>A familiar voice.<br><span>An unfamiliar risk.</span></h2><p>Voice cloning makes listening alone an unreliable way to judge authenticity. VoiceGuard explores the acoustic signals that can help you look closer.</p></div>
+        <div class="vg-feature-grid"><article><span class="vg-feature-icon" aria-hidden="true">⌁</span><p class="vg-small-label">DETECT</p><h3>Look beyond the sound.</h3><p>Analyze recordings for patterns associated with synthetic speech using speech anti-spoofing models.</p><a href="#vg-how">Explore the workflow <span aria-hidden="true">↗</span></a></article><article><span class="vg-feature-icon" aria-hidden="true">≋</span><p class="vg-small-label">UNDERSTAND</p><h3>Make the signal visible.</h3><p>Review an audio waveform, model-generated scores, and a detection result together in one workspace.</p><a href="#vg-demo">Explore the signals <span aria-hidden="true">↗</span></a></article><article><span class="vg-feature-icon" aria-hidden="true">◎</span><p class="vg-small-label">INVESTIGATE</p><h3>Keep a human in the loop.</h3><p>Use findings as a starting point for further review. A model score is an indication, never proof of identity.</p><a href="#vg-faq">Know the limitations <span aria-hidden="true">↗</span></a></article></div>
+      </section>
+      <section class="vg-demo-section" id="vg-demo"><div class="vg-wrap vg-demo-grid"><div><p class="vg-eyebrow">EXPLORE THE SIGNAL</p><h2>There’s more to a voice<br>than meets the ear.</h2><p>Explore two illustrative signal patterns and the questions a forensic model asks. Real analysis happens in the dashboard.</p><div class="vg-demo-options" role="group" aria-label="Illustrative signal pattern"><button class="is-active" data-vg-signal="human" aria-pressed="true">Human speech</button><button data-vg-signal="synthetic" aria-pressed="false">Synthetic speech</button></div><p class="vg-demo-disclaimer">Visual illustration only. No recording or detection is running.</p></div><div class="vg-demo-display"><div class="vg-display-top"><span>ACOUSTIC SIGNAL EXPLORER</span><button id="vgMotion" aria-pressed="false" aria-label="Pause signal animation">Pause <span aria-hidden="true">Ⅱ</span></button></div><div class="vg-demo-wave" id="vgDemoWave" aria-hidden="true"></div><div class="vg-demo-caption" aria-live="polite"><span id="vgSignalLabel">01 / HUMAN SPEECH</span><h3 id="vgSignalTitle">Natural variation. Complex rhythms.</h3><p id="vgSignalDescription">Breath, timing, and pitch vary across human speech. These patterns are part of the acoustic picture—not a guarantee of authenticity.</p></div><div class="vg-display-bottom"><span>ILLUSTRATIVE PATTERN</span><span>NOT A DETECTION RESULT</span></div></div></div></section>
+      <section class="vg-wrap vg-section" id="vg-how"><div class="vg-section-heading"><p class="vg-eyebrow">02 / HOW IT WORKS</p><h2>From audio to insight.<br><span>In three clear steps.</span></h2><p>A focused workspace to explore a recording, run an available detection model, and review what it finds.</p></div><div class="vg-steps"><article><span>01</span><h3>Bring your audio.</h3><p>Upload a voice recording or use your microphone in the dashboard. Only submit audio you have permission to analyze.</p></article><article><span>02</span><h3>Examine the signal.</h3><p>Choose an available model and submit your audio to the inference server for analysis.</p></article><article><span>03</span><h3>Review the evidence.</h3><p>Explore the model’s score and result. Consider the recording’s source and context before drawing conclusions.</p></article></div><button class="vg-button" data-vg-login>Open VoiceGuard <span aria-hidden="true">↗</span></button></section>
+      <section class="vg-about" id="vg-about"><div class="vg-wrap vg-about-grid"><div><p class="vg-eyebrow">03 / BUILT FOR CURIOSITY</p><h2>Better questions.<br><em>Deeper listening.</em></h2></div><div><p class="vg-about-lead">VoiceGuard is an experimental project exploring how machine learning can help us understand the authenticity of speech.</p><p>Its research workspace brings audio submission, speech anti-spoofing models, and readable results together. Model availability depends on configured checkpoints and the inference backend.</p><div class="vg-model-list"><span>AASIST</span><span>RawNet2</span><span>Forensics</span><span>ProSDD</span></div><a class="vg-text-link" href="https://github.com/kamulugariabhinav-cmd/fieldproj-v2" target="_blank" rel="noopener noreferrer">Explore the project on GitHub <span aria-hidden="true">↗</span></a></div></div></section>
+      <section class="vg-wrap vg-section vg-faq" id="vg-faq"><div><p class="vg-eyebrow">A LITTLE MORE CLARITY</p><h2>Good questions.<br>Honest answers.</h2></div><div class="vg-faq-list"><details><summary>What does VoiceGuard detect?</summary><p>VoiceGuard analyzes audio for patterns associated with synthetic or manipulated speech. Results depend on the selected model, its training data, and the recording quality.</p></details><details><summary>Can I rely on a result as proof?</summary><p>No. VoiceGuard is a research and educational prototype, not a production-validated forensic tool. False positives and false negatives are possible. Never use a result alone to make identity, fraud, or authenticity decisions.</p></details><details><summary>Do I need an account to explore?</summary><p>You can read this homepage and explore the signal illustration without an account. Sign in with Google or email to enter the workspace, or use the guest dashboard to explore its interface.</p></details><details><summary>Does the audio analysis run in my browser?</summary><p>The waveform interface runs in your browser. Detection sends your submitted audio to the configured inference server. An available backend and loaded model weights are required.</p></details><details><summary>Why might a model be unavailable?</summary><p>The website and inference backend are separate. A model requires compatible dependencies and pretrained weights. The dashboard reports backend connectivity; a visible homepage does not mean detection is online.</p></details></div></section>
+      <section class="vg-final-cta vg-wrap"><p class="vg-eyebrow">DON’T JUST LISTEN. LOOK CLOSER.</p><h2>Give every voice<br>a second thought.</h2><button class="vg-button" data-vg-login>Explore VoiceGuard <span aria-hidden="true">↗</span></button><span class="vg-cta-orbit" aria-hidden="true"></span></section>
+    </main>
+    <footer class="vg-footer vg-wrap"><a href="#vg-main" class="vg-brand">voiceguard<span class="vg-brand-dot">.</span></a><p>Speech forensics. Thoughtfully explored.</p><div><a href="#vg-about">About the project</a><a href="#vg-faq">FAQs</a><button data-vg-login>Sign in ↗</button></div><small>© 2026 VoiceGuard · Experimental audio forensics. Results are not proof of authenticity.</small></footer>
+    <dialog class="vg-login-dialog" id="vgLoginDialog" aria-labelledby="vgLoginTitle"><button class="vg-dialog-close" id="vgCloseLogin" aria-label="Close sign-in">×</button><p class="vg-eyebrow">WELCOME TO VOICEGUARD</p><h2 id="vgLoginTitle">Look a little closer.</h2><p>Sign in to enter your audio forensics workspace.</p><button class="vg-button vg-google" id="welcomeGoogle">Continue with Google <span aria-hidden="true">↗</span></button><p id="welcomeMessage" role="status" class="vg-auth-status"></p><div class="vg-divider">or continue with email</div><form id="emailAuthForm" class="email-auth-form"><label for="emailAuthEmail">Email address</label><input id="emailAuthEmail" type="email" autocomplete="email" placeholder="you@example.com" required><label for="emailAuthPassword">Password</label><input id="emailAuthPassword" type="password" autocomplete="current-password" minlength="6" required><button type="submit" class="vg-button">Sign in <span aria-hidden="true">↗</span></button><div class="vg-auth-links"><button type="button" id="emailRegister">Create account</button><button type="button" id="emailReset">Forgot password?</button></div><p id="emailAuthMessage" role="status" class="vg-auth-status"></p></form><button class="vg-guest" id="welcomeGuest">Explore dashboard as a guest →</button></dialog>
+  </section>
+
+
+  <div class="app-shell">
+
+    <aside class="sidebar" id="sidebar">
+
+      <div class="brand">
+
+        <button id="brandToggle" class="brand-toggle" aria-label="Collapse sidebar" aria-expanded="true" title="Toggle sidebar">
+
+          <span class="brand-icon">
+
+            <div class="audio-wave" aria-hidden="true">
+
+              <span></span><span></span><span></span><span></span><span></span>
+
+            </div>
+
+          </span>
+
+        </button>
+
+        <div class="brand-copy">
+
+          <div class="glitch-wrapper">
+
+            <strong class="brand-glitch glitch" data-text="VOICEGUARD">VOICEGUARD</strong>
+
+          </div>
+
+          <small>NEURAL DEFENSE // V2</small>
+
+        </div>
+
+      </div>
+
+
+
+      <div class="nav-label">COMMAND CENTER</div>
+
+      <nav class="nav" id="sidebarNav" aria-label="Primary">
+
+        <button class="nav-link active" data-page="dashboard"><span>◈</span> Dashboard <small>01</small></button>
+
+        <button class="nav-link" data-page="history"><span>◷</span> History <small>02</small></button>
+
+        <button class="nav-link" data-page="profile"><span>◎</span> Profile <small>03</small></button>
+
+        <div class="nav-indicator" id="navIndicator"></div>
+
+      </nav>
+
+
+
+      <div class="side-bottom">
+
+        <div class="connection">
+
+          <span class="status-dot" id="statusDot"></span>
+
+          <div>
+
+            <strong id="statusText">Checking API</strong>
+
+            <small>INFERENCE CONNECTION</small>
+
+          </div>
+
+        </div>
+
+        <div class="side-caption">VOICEGUARD / EXPERIMENTAL<br>RESEARCH INTERFACE</div>
+
+      </div>
+
+    </aside>
+
+
+
+    <div class="main-shell">
+
+      <header class="topbar">
+
+        <div class="topbar-left">
+
+          <button class="icon-button menu-button" id="menuBtn" aria-label="Toggle menu">☰</button>
+
+          <div class="glitch-wrapper topbar-glitch-wrapper">
+
+            <span class="glitch topbar-glitch" data-text="VOICEGUARD">VOICEGUARD</span>
+
+          </div>
+
+          <div class="breadcrumbs">SYSTEM <span>/</span> <strong id="currentPageLabel">DASHBOARD</strong></div>
+
+        </div>
+
+        <div class="top-right">
+
+          <span class="live-pill"><i></i> CYBER FORENSICS</span>
+
+          <button class="account-button" id="accountBtn" aria-label="Open profile">
+
+            <span id="accountAvatar">G</span>
+
+            <span id="accountLabel">Guest</span>
+
+          </button>
+
+        </div>
+
+      </header>
+
+
+
+      <!-- Dashboard Page -->
+
+      <section class="page active" id="dashboardPage">
+
+        <div class="intro">
+
+          <div>
+
+            <div class="eyebrow"><span class="eyebrow-line"></span> AI SPEECH INTELLIGENCE SYSTEM</div>
+
+            <div class="glitch-wrapper intro-glitch-wrapper">
+
+              <span class="glitch intro-glitch" data-text="VOICEGUARD">VOICEGUARD</span>
+
+            </div>
+
+            <h1>Detect the <em>synthetic.</em><br>Protect the <span class="cyan">authentic.</span></h1>
+
+            <p>Investigate voice recordings with two research detection engines. Explore the signal, inspect the result, and keep track of your analyses.</p>
+
+            <div class="intro-chips">
+
+              <span>◈ DUAL ENGINE</span>
+
+              <span>◉ AUDIO REACTIVE</span>
+
+              <span>⌁ 3D INTERACTIVE</span>
+
+            </div>
+
+          </div>
+
+          <div class="intro-serial">VG / 02.26<br><span>WAVE OPERATIONS</span></div>
+
+        </div>
+
+
+
+        <div class="dashboard-grid">
+
+          <!-- 01 Holographic Wave Field -->
+
+          <section class="panel core-panel">
+
+            <div class="panel-heading">
+
+              <div>
+
+                <span class="overline">01 / INTERACTIVE SYSTEM</span>
+
+                <h2>Holographic Wave Field</h2>
+
+              </div>
+
+              <span class="online-label">● LIVE RENDER</span>
+
+            </div>
+
+            <div class="core-stage" id="coreStage" aria-label="Interactive 3D neon waves; drag to rotate and scroll to zoom">
+
+              <div id="coreCanvas"></div>
+
+              <div class="core-overlay top-left">TARGET / VOICE<br><b id="coreMode">IDLE</b></div>
+
+              <div class="core-overlay bottom-right">DRAG TO ROTATE WAVES<br>SCROLL TO ZOOM</div>
+
+              <div class="core-fallback hidden" id="coreFallback">3D graphics unavailable on this device.</div>
+
+            </div>
+
+            <div class="core-controls">
+
+              <button class="ghost-button" id="resetCore">↺ Reset View</button>
+
+              <button class="ghost-button" id="toggleSpin">Ⅱ Pause Motion</button>
+
+              <span id="coreState">STANDBY</span>
+
+            </div>
+
+          </section>
+
+
+
+          <!-- 02 Input Terminal -->
+
+          <section class="panel input-panel">
+
+            <div class="panel-heading">
+
+              <div>
+
+                <span class="overline">02 / INPUT TERMINAL</span>
+
+                <h2>Audio Analysis</h2>
+
+              </div>
+
+              <span class="module-id">VG_INPUT</span>
+
+            </div>
+
+
+
+            <label class="field-label" for="modelSelect">DETECTION ENGINE</label>
+
+            <select id="modelSelect" class="field">
+
+              <option value="prosdd">ProSDD // Stage-2 Epoch-4</option>
+
+              <option value="forensics">Forensics // XLS-R Wild</option>
+
+            </select>
+
+
+
+            <!-- Animated Tab Bar with Sliding Indicator -->
+
+            <div class="tab-bar input-tab-bar" id="inputTabBar">
+
+              <button class="tab-item active" id="uploadTab" type="button">
+
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+
+                <span>Upload File</span>
+
+              </button>
+
+              <button class="tab-item" id="recordTab" type="button">
+
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7" fill="currentColor"/><circle cx="12" cy="12" r="10"/></svg>
+
+                <span>Record Voice</span>
+
+              </button>
+
+              <div class="tab-indicator" id="inputTabIndicator"></div>
+
+            </div>
+
+
+
+            <div id="uploadPanel">
+
+              <label class="dropzone" id="dropzone">
+
+                <span class="drop-icon">⌁</span>
+
+                <strong>DROP AUDIO SIGNAL HERE</strong>
+
+                <span>or click to browse your files</span>
+
+                <small>WAV / MP3 / FLAC / M4A / WEBM · MAX 25 MB</small>
+
+                <input type="file" id="fileInput" accept=".wav,.mp3,.flac,.m4a,.mp4,.webm,audio/*" hidden>
+
+              </label>
+
+            </div>
+
+
+
+            <div id="recordPanel" class="hidden">
+
+              <div class="record-box">
+
+                <div id="recordTimer" class="record-time">00:00</div>
+
+                <p>Record a clear speech sample using your microphone.</p>
+
+                <div class="button-row">
+
+                  <button class="btn primary" id="startRecord">◉ Start recording</button>
+
+                  <button class="btn danger" id="stopRecord" disabled>■ Stop</button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+
+            <div class="file-details hidden" id="fileDetails">
+
+              <div>
+
+                <strong id="fileName"></strong>
+
+                <small id="fileSize"></small>
+
+              </div>
+
+              <button class="ghost-button" id="removeFile">Remove</button>
+
+            </div>
+
+
+
+            <audio id="audioPreview" class="audio-preview hidden" controls></audio>
+
+
+
+            <div class="action-row">
+
+              <button class="btn primary" id="analyzeBtn" disabled>
+
+                <span class="scan-label">⚡ INITIATE SCAN</span>
+
+                <div class="audio-wave" aria-hidden="true">
+
+                  <span></span><span></span><span></span><span></span><span></span>
+
+                </div>
+
+              </button>
+
+              <button class="btn secondary" id="resetBtn">Reset</button>
+
+            </div>
+
+            <p class="message" id="message" role="status" aria-live="polite">Awaiting audio input.</p>
+
+          </section>
+
+
+
+          <!-- 03 Live Forensics with Morphing Voice Orb -->
+
+          <section class="panel live-panel">
+
+            <div class="panel-heading">
+
+              <div>
+
+                <span class="overline">03 / LIVE FORENSICS</span>
+
+                <h2>Live Voice Detection</h2>
+
+              </div>
+
+              <span class="module-id" id="liveBadge">OFFLINE</span>
+
+            </div>
+
+
+
+            <div class="orb-container">
+
+              <div class="listening-text" id="listeningText">Ready to listen</div>
+
+              <div class="orb-wrapper">
+
+                <div class="live-ripple-ring ring-1"></div>
+
+                <div class="live-ripple-ring ring-2"></div>
+
+                <div class="live-ripple-ring ring-3"></div>
+
+                <div class="voice-orb" id="voiceOrb" aria-hidden="true"></div>
+
+              </div>
+
+              <div class="live-audio-waves" id="liveAudioWaves" aria-hidden="true">
+
+                <span></span><span></span><span></span><span></span><span></span>
+
+                <span></span><span></span><span></span><span></span><span></span>
+
+                <span></span><span></span><span></span><span></span><span></span>
+
+              </div>
+
+            </div>
+
+
+
+            <p class="live-description">Continuously analyze short microphone samples with your selected AI detection engine. Results arrive after each server response.</p>
+
+            <div class="live-actions">
+
+              <button class="btn primary" id="startLive">◉ Start live detection</button>
+
+              <button class="btn danger" id="stopLive" disabled>■ Stop detection</button>
+
+            </div>
+
+            <div class="live-readout">
+
+              <span id="liveStatus" role="status" aria-live="polite">Microphone is off.</span>
+
+              <strong id="liveCount">0 samples</strong>
+
+            </div>
+
+            <p class="disclaimer">Microphone access requires permission. Each sample is sent to your existing FastAPI server. Browser recording format must be supported by your backend.</p>
+
+          </section>
+
+
+
+          <!-- 04 Intelligence Report -->
+
+          <section class="panel results-panel">
+
+            <div class="panel-heading">
+
+              <div>
+
+                <span class="overline">04 / INTELLIGENCE REPORT</span>
+
+                <h2>Detection Result</h2>
+
+              </div>
+
+              <span class="module-id">VG_RESULT</span>
+
+            </div>
+
+
+
+            <div class="empty-result" id="emptyResult">
+
+              <div class="awaiting-visual">
+
+                <div class="awaiting-ring ring-1"></div>
+
+                <div class="awaiting-ring ring-2"></div>
+
+                <span class="empty-symbol">◎</span>
+
+              </div>
+
+              <strong class="awaiting-heading" id="awaitingHeading">AWAITING AUDIO SIGNAL</strong>
+
+              <p class="awaiting-subtext" id="awaitingSubtext">Upload a voice recording or record from microphone to run AI forensic detection.</p>
+
+              <div class="awaiting-wave-preview" id="awaitingWavePreview" aria-hidden="true">
+
+                <span></span><span></span><span></span><span></span><span></span>
+
+                <span></span><span></span><span></span><span></span><span></span>
+
+              </div>
+
+            </div>
+
+
+
+            <div class="analyzing-display hidden" id="analyzingDisplay">
+
+              <div class="scanner-hologram">
+
+                <div class="scan-radar-ripple ripple-1"></div>
+
+                <div class="scan-radar-ripple ripple-2"></div>
+
+                <div class="scan-laser-line"></div>
+
+                <div class="scanner-core">
+
+                  <span class="scanner-icon">⌁</span>
+
+                </div>
+
+              </div>
+
+
+
+              <div class="analyzing-audio-waves" aria-hidden="true">
+
+                <span></span><span></span><span></span><span></span><span></span>
+
+                <span></span><span></span><span></span><span></span><span></span>
+
+                <span></span><span></span><span></span><span></span><span></span>
+
+              </div>
+
+
+
+              <div class="analyzing-meta">
+
+                <strong class="analyzing-title">ANALYSING AUDIO FORENSICS...</strong>
+
+                <p class="analyzing-subtitle" id="analyzingSubtitle">Extracting spectral features & neural acoustic probabilities</p>
+
+                <div class="analyzing-progress-bar"><div class="analyzing-progress-fill"></div></div>
+
+                <div class="analyzing-tags">
+
+                  <span class="tag-pulse">● SPECTROGRAM MAPPING</span>
+
+                  <span class="tag-pulse">● ACOUSTIC PATTERNS</span>
+
+                  <span class="tag-pulse">● NEURAL INFERENCE</span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+
+            <div class="hidden" id="resultContent">
+
+              <div class="result-top">
+
+                <div>
+
+                  <span class="field-label">AI SPEECH SCORE</span>
+
+                  <div class="score"><span id="aiScore">0.000</span><small>%</small></div>
+
+                </div>
+
+                <div class="verdict" id="prediction">—</div>
+
+              </div>
+
+              <div class="score-track"><div id="scoreBar"></div></div>
+
+              <div class="metric-grid">
+
+                <div class="metric"><span>DETECTION ENGINE</span><strong id="resultModel">—</strong></div>
+
+                <div class="metric" id="durationMetric"><span>AUDIO DURATION</span><strong id="duration">—</strong></div>
+
+                <div class="metric" id="windowsMetric"><span>WINDOWS ANALYZED</span><strong id="windows">—</strong></div>
+
+                <div class="metric" id="inferenceMetric"><span>INFERENCE TIME</span><strong id="inferenceTime">—</strong></div>
+
+                <div class="metric" id="thresholdMetric"><span>DECISION THRESHOLD</span><strong id="threshold">—</strong></div>
+
+              </div>
+
+              <div id="warnings"></div>
+
+              <p class="disclaimer">Research-model outputs can be inaccurate and are not proof of a recording's origin or a speaker's identity.</p>
+
+            </div>
+
+          </section>
+
+        </div>
+
+
+
+        <div class="bottom-note">
+
+          <span>◈ TWO RESEARCH ENGINES</span>
+
+          <span>◷ HISTORY STORED IN THIS BROWSER</span>
+
+          <span>⚠ EXPERIMENTAL RESULTS</span>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- History Page -->
+
+      <section class="page" id="historyPage">
+
+        <div class="page-header">
+
+          <span class="overline">05 / ACTIVITY ARCHIVE</span>
+
+          <h1>Detection <em>History.</em></h1>
+
+          <p>Browse, filter, revisit, and remove your locally saved analysis records.</p>
+
+        </div>
+
+        <div class="panel history-panel">
+
+          <div class="history-toolbar">
+
+            <input id="historySearch" class="field" type="search" placeholder="Search filenames or models…" aria-label="Search history">
+
+            <select id="historyFilter" class="field" aria-label="Filter history">
+
+              <option value="all">All predictions</option>
+
+              <option value="ai">AI detected</option>
+
+              <option value="human">Human detected</option>
+
+            </select>
+
+            <button id="exportHistory" class="ghost-button">↓ Export JSON</button>
+
+            <button id="clearHistory" class="ghost-button danger-text">Clear all</button>
+
+          </div>
+
+          <div id="historyCount" class="history-count">0 records</div>
+
+          <div id="historyList" class="history-list"></div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- Profile Page -->
+
+      <section class="page" id="profilePage">
+
+        <div class="page-header">
+
+          <span class="overline">06 / OPERATOR IDENTITY</span>
+
+          <h1>Your <em>Profile.</em></h1>
+
+          <p>Connect your Google account and review your local session information.</p>
+
+        </div>
+
+        <div class="profile-grid">
+
+          <div class="panel profile-card">
+
+            <div class="profile-avatar" id="profileAvatar">G</div>
+
+            <h2 id="profileName">Guest Operator</h2>
+
+            <p id="profileEmail">Not signed in</p>
+
+            <span class="profile-state" id="authStatus">GUEST SESSION</span>
+
+          </div>
+
+          <div class="panel account-card">
+
+            <span class="overline">ACCOUNT SETTINGS</span>
+
+            <h2>Identity & Access</h2>
+
+            <p>Google authentication uses Firebase once you configure your Firebase project. This interface does not send identity tokens to your FastAPI server yet.</p>
+
+            <div class="account-actions">
+
+              <button id="googleLogin" class="btn primary">G Sign in with Google</button>
+                <button id="openEmailLogin" class="btn secondary" type="button">Email login / Create account</button>
+
+              <button id="signOut" class="btn secondary hidden">Sign out</button>
+
+            </div>
+
+            <p id="authMessage" class="message" role="status"></p>
+
+            <div class="account-note">History is currently stored in this browser only. Google sign-in does not synchronize it or protect the detection API.</div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- Floating Action Button (FAB) - Black Theme with GitHub & Contact Developer -->
+
+      <div class="fab-container" id="developerFab">
+
+        <div class="fab-menu" id="fabMenu">
+
+          <button class="fab-action" id="fabContact" aria-label="Contact Developer" title="Contact Developer">
+
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+
+            </svg>
+
+            <span class="fab-tooltip">Contact Developer</span>
+
+          </button>
+
+          <a class="fab-action" href="https://github.com/kamulugariabhinav-cmd" target="_blank" rel="noopener noreferrer" aria-label="Developer GitHub Profile" title="GitHub: kamulugariabhinav-cmd">
+
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+
+            </svg>
+
+            <span class="fab-tooltip">GitHub Profile</span>
+
+          </a>
+
+        </div>
+
+        <button class="fab-main" id="fabToggle" aria-label="Open Developer Menu" title="Developer Options">&#43;</button>
+
+      </div>
+
+
+
+      <!-- Contact Developer Modal Dialog -->
+
+      <div class="contact-modal hidden" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+
+        <div class="contact-modal-backdrop" id="contactModalBackdrop"></div>
+
+        <div class="contact-modal-card">
+
+          <button class="contact-modal-close" id="contactModalClose" aria-label="Close dialog">&times;</button>
+
+          <div class="contact-header">
+
+            <div class="contact-avatar">
+
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+
+              </svg>
+
+            </div>
+
+            <div>
+
+              <h3 id="contactTitle">Kamulugari Abhinav</h3>
+
+              <p class="contact-subtitle">Lead Developer & Forensics Engineer</p>
+
+            </div>
+
+          </div>
+
+          <div class="contact-body">
+
+            <p>Connect with the developer, report AI detection vulnerabilities, or request custom speech intelligence models.</p>
+
+            <div class="contact-links">
+
+              <a href="https://github.com/kamulugariabhinav-cmd" target="_blank" rel="noopener noreferrer" class="contact-item">
+
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+
+                <div>
+
+                  <strong>GitHub Profile</strong>
+
+                  <small>@kamulugariabhinav-cmd</small>
+
+                </div>
+
+              </a>
+
+              <a href="https://github.com/kamulugariabhinav-cmd/fieldproj-v2/issues/new" target="_blank" rel="noopener noreferrer" class="contact-item">
+
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+
+                <div>
+
+                  <strong>Repository Issues</strong>
+
+                  <small>Submit bug report or feature request</small>
+
+                </div>
+
+              </a>
+
+              <a href="mailto:abhinavkamulugari@gmail.com?subject=VoiceGuard%20Developer%20Inquiry" class="contact-item">
+
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+
+                <div>
+
+                  <strong>Email Developer</strong>
+
+                  <small>abhinavkamulugari@gmail.com</small>
+
+                </div>
+
+              </a>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+      <footer>
+
+        <div class="footer-left">
+
+          <div class="glitch-wrapper">
+
+            <strong class="glitch" data-text="VOICEGUARD">VOICEGUARD</strong>
+
+          </div>
+
+          <span>// EXPERIMENTAL AUDIO FORENSICS RESEARCH</span>
+
+        </div>
+
+        <span>NOT FOR SOLE USE IN IDENTITY, FRAUD, OR AUTHENTICITY DECISIONS.</span>
+
+      </footer>
+
+    </div>
+
+  </div>
+
+</body>
+
+</html>

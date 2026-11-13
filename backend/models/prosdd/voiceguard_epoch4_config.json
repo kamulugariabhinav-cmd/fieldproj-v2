@@ -1,0 +1,56 @@
+{
+  "project": "VoiceGuard",
+  "status": "experimental_candidate",
+  "created_utc": "2026-10-13T22:04:03.066353+00:00",
+  "model": {
+    "architecture": "ProSDDStage2",
+    "backbone": "facebook/wav2vec2-xls-r-300m",
+    "original_checkpoint": "/content/drive/MyDrive/VoiceGuard/pro_sdd_ready.pth",
+    "fine_tuned_classifier": "/content/drive/MyDrive/VoiceGuard/fine_tuning/candidates/classifier_epoch_04.pth",
+    "classifier_sha256": "c3e2df9c1678d49544c43780d485f43c8a50b21b319897e9d6ba184e1765eb29",
+    "classifier_epoch": 4,
+    "pooling": "mean",
+    "target_frames": 200,
+    "embedding_dimension": 1024,
+    "sample_rate_hz": 16000,
+    "audio_channels": 1,
+    "audio_samples": 64000,
+    "duration_seconds": 4,
+    "label_mapping": {
+      "0": "spoof",
+      "1": "bonafide"
+    }
+  },
+  "decision": {
+    "score": "softmax(logits, dim=1)[:, 0] * 100",
+    "score_description": "AI score; not calibrated probability",
+    "threshold_percent": 99.70488,
+    "predict_spoof_when": "ai_score_percent >= threshold_percent",
+    "threshold_source": "ASVspoof2021 validation 200",
+    "threshold_status": "validation_selected"
+  },
+  "separate_recording_evaluation_100": {
+    "spoof_recordings": 50,
+    "genuine_recordings": 50,
+    "original_auc": 0.9444,
+    "fine_tuned_auc": 0.9708,
+    "auc_difference": 0.0264,
+    "auc_difference_bootstrap_95ci": [
+      0.0064,
+      0.054
+    ],
+    "original_accuracy_percent": 87.0,
+    "fine_tuned_accuracy_percent": 89.0,
+    "fine_tuned_spoof_detected": 39,
+    "fine_tuned_genuine_false_alarms": 0,
+    "mcnemar_exact_p": 0.5
+  },
+  "limitations": [
+    "Experimental research prototype, not production validated",
+    "AI score is not a calibrated probability",
+    "Small separate-recording evaluation set",
+    "Zero observed false positives does not imply zero real-world FPR",
+    "Further evaluation across datasets, codecs and synthesis systems needed",
+    "Do not use as sole evidence for consequential decisions"
+  ]
+}

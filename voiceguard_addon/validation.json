@@ -1,0 +1,87 @@
+{
+  "scope": "Multipart inference smoke checks; sample provenance not independently verified; no accuracy claim",
+  "original_files_checked": 64,
+  "original_files_changed": [],
+  "uploads": [
+    {
+      "file": "dataset\\bonafide\\bonafide_001.wav",
+      "folder_label": "bonafide",
+      "result": {
+        "model_name": "PellaV2",
+        "prediction": "Human Detected",
+        "ai_probability": 1.6062713257269934e-05,
+        "human_probability": 0.9999839372867427,
+        "confidence": 0.9999839372867427,
+        "score_calibrated": false,
+        "audio_duration_seconds": 4.0,
+        "inference_time_ms": 5920.761899999889,
+        "windows_analyzed": 1,
+        "warnings": [
+          "Uncalibrated model score; accuracy depends on the recording domain.",
+          "Audio longer than 10 seconds uses duration-weighted window scores."
+        ],
+        "filename": "bonafide_001.wav"
+      }
+    },
+    {
+      "file": "dataset\\spoof\\spoof_001.wav",
+      "folder_label": "spoof",
+      "result": {
+        "model_name": "PellaV2",
+        "prediction": "AI Detected",
+        "ai_probability": 0.9999716281890869,
+        "human_probability": 2.8371810913085938e-05,
+        "confidence": 0.9999716281890869,
+        "score_calibrated": false,
+        "audio_duration_seconds": 6.8733125,
+        "inference_time_ms": 4015.7495000000836,
+        "windows_analyzed": 1,
+        "warnings": [
+          "Uncalibrated model score; accuracy depends on the recording domain.",
+          "Audio longer than 10 seconds uses duration-weighted window scores."
+        ],
+        "filename": "spoof_001.wav"
+      }
+    },
+    {
+      "file": "dataset\\bonafide\\bonafide_001.wav",
+      "folder_label": "bonafide",
+      "result": {
+        "model_name": "NII-AntiDeepfake",
+        "prediction": "Human Detected",
+        "ai_probability": 0.00041721752495504916,
+        "human_probability": 0.999582782475045,
+        "confidence": 0.999582782475045,
+        "score_calibrated": false,
+        "audio_duration_seconds": 4.0,
+        "inference_time_ms": 9377.57590000001,
+        "windows_analyzed": 1,
+        "warnings": [
+          "Uncalibrated model score; accuracy depends on the recording domain.",
+          "Audio longer than 10 seconds uses duration-weighted window scores."
+        ],
+        "filename": "bonafide_001.wav"
+      }
+    },
+    {
+      "file": "dataset\\spoof\\spoof_001.wav",
+      "folder_label": "spoof",
+      "result": {
+        "model_name": "NII-AntiDeepfake",
+        "prediction": "AI Detected",
+        "ai_probability": 0.998393714427948,
+        "human_probability": 0.001606285572052002,
+        "confidence": 0.998393714427948,
+        "score_calibrated": false,
+        "audio_duration_seconds": 6.8733125,
+        "inference_time_ms": 16628.39379999991,
+        "windows_analyzed": 1,
+        "warnings": [
+          "Uncalibrated model score; accuracy depends on the recording domain.",
+          "Audio longer than 10 seconds uses duration-weighted window scores."
+        ],
+        "filename": "spoof_001.wav"
+      }
+    }
+  ]
+}

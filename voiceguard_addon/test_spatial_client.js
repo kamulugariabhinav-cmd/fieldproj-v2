@@ -1,0 +1,14 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const events={},props=new Map(),listeners={};
+const card={classList:{add(){}},style:{setProperty:(k,v)=>props.set(k,v),removeProperty:k=>props.delete(k)},getBoundingClientRect:()=>({left:0,top:0,width:200,height:100}),addEventListener:(name,fn)=>events[name]=fn};
+const reduced={matches:false,addEventListener:(name,fn)=>listeners[name]=fn};
+vm.runInNewContext(fs.readFileSync(__dirname+'/assets/spatial.js','utf8'),{document:{querySelectorAll:()=>[card],querySelector:()=>null},matchMedia:query=>query.includes('reduced')?reduced:{matches:true},window:{addEventListener(){}},requestAnimationFrame:fn=>fn(),innerHeight:800});
+events.pointermove({clientX:200,clientY:0});assert.equal(props.get('--tilt-y'),'2.5deg');assert.equal(props.get('--tilt-x'),'2.5deg');
+events.pointerleave();assert.equal(props.size,0);
+reduced.matches=true;events.pointermove({clientX:200,clientY:0});assert.equal(props.size,0);
+console.log('Spatial cards: bounded pointer depth, reset, and reduced-motion opt-out passed.');
+const scrollEvents={},hero={dataset:{},style:{setProperty(){}},getBoundingClientRect:()=>({top:-100,height:400})};
+reduced.matches=false;
+vm.runInNewContext(fs.readFileSync(__dirname+'/assets/spatial.js','utf8'),{document:{querySelectorAll:()=>[],querySelector:()=>hero},matchMedia:()=>reduced,window:{addEventListener:(name,fn)=>scrollEvents[name]=fn},requestAnimationFrame:fn=>fn(),innerHeight:800});
+assert.equal(hero.dataset.scrollProgress,'0.5');reduced.matches=true;scrollEvents.scroll();assert.equal(hero.dataset.scrollProgress,'0');
+console.log('Hero scroll depth is bounded and disabled with reduced motion.');

@@ -1,0 +1,8 @@
+body{isolation:isolate;background-color:#080b18}
+#liquidBackdrop{position:fixed!important;inset:0!important;display:block!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;margin:0!important;padding:0!important;z-index:0!important;pointer-events:none!important;background:#080b18}
+body>main,body>.app-shell,body>.site-footer,body>.support-nav{position:relative;z-index:1}
+body>header{z-index:30}
+.support-page>header{position:relative;z-index:1}
+.ambient,.liquid-stream,#liquidCanvas,.mesh-background{display:none!important}
+.listen-section{background:linear-gradient(120deg,#101526db,#171128db)}
+.research-section{background:radial-gradient(ellipse at top left,#522e7625,transparent 65%),#111126cf}

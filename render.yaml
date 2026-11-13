@@ -1,0 +1,29 @@
+# VoiceGuard Backend - Render Blueprint Configuration
+services:
+  - type: web
+    name: voiceguard-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu && pip install --no-cache-dir -r requirements.txt
+    startCommand: python backend.py
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      # Default fallback model (AASIST-L, AASIST, RawNet2, Wav2Vec2-Deepfake)
+      # All models remain active and selectable at runtime regardless of this setting
+      - key: VOICEGUARD_MODEL
+        value: AASIST-L
+      - key: VOICEGUARD_THRESHOLD
+        value: "0.50"
+      - key: ALLOWED_ORIGINS
+        value: "https://fieldproj-v2.vercel.app"
+      # Optional External Cloud API Keys (for TruthScan, Hive AI, Resemble AI)
+      - key: TRUTHSCAN_API_KEY
+        sync: false
+      - key: HIVE_API_KEY
+        sync: false
+      - key: RESEMBLE_API_KEY
+        sync: false

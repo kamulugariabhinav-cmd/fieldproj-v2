@@ -1,0 +1,26 @@
+.brand-voice,.footer-wordmark>span:first-child{color:#00e0ee!important}.brand-guard,.footer-wordmark>span:last-child{color:#ff2daa!important}
+.glitch,.brand-glitch,.topbar-glitch,.intro-glitch,.vg-brand,.brand,.support-brand{animation:none!important;text-shadow:none!important;filter:none!important;font-weight:800!important;transform:none!important}
+.glitch::before,.glitch::after,.glitch-wrapper::before,.glitch-wrapper::after{content:none!important;animation:none!important}
+.glitch-wrapper{animation:none!important;transform:none!important}
+.support-brand{gap:0}.support-brand>img{margin-right:12px}
+.brand>span{font-weight:800}.brand-dot{display:none}
+.expanded-footer{display:block!important;padding:65px max(24px,calc((100vw - 1240px)/2)) 25px!important;border-top:1px solid #ffffff20;background:#0b0c1ce6;position:relative;z-index:1}
+.footer-columns{display:grid;grid-template-columns:repeat(3,1fr);gap:48px;padding-bottom:70px}.footer-columns h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#a8abc3;margin:0 0 25px}.footer-columns a{display:block;width:fit-content;font-size:14px;margin:16px 0;color:#e3e4ef}.footer-columns a:hover{color:#00e0ee}
+.footer-wordmark{display:flex;justify-content:center;white-space:nowrap;font-size:clamp(38px,12vw,180px);font-weight:800;line-height:1;letter-spacing:-.075em;padding-bottom:40px;user-select:none}
+.footer-bottom{border-top:1px solid #ffffff20;padding-top:20px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:11px;color:#aaaac1}
+.page-tool{margin:35px 0 45px;padding:26px;border:1px solid #00e0ee38;border-radius:14px;background:#101326d9}.page-tool h2{margin:0 0 20px!important;font-size:25px}.tool-eyebrow{font-size:10px;letter-spacing:.15em;color:#00e0ee!important;margin:0 0 12px!important}.page-tool label{display:block;font-size:13px;color:#dddfee;margin:16px 0 6px}.page-tool input,.page-tool select,.page-tool textarea{width:100%;background:#080b18;border:1px solid #74649c88;padding:12px;border-radius:7px;color:#f4f3fc;font:inherit;font-size:14px}.page-tool input[type=file]{font-size:12px}.tool-options{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0}.tool-options button,.tool-options a{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid #74649c66;background:#11162c;border-radius:6px;color:#dadced;font-size:12px;text-decoration:none;cursor:pointer}.tool-options button[aria-pressed=true],.tool-options button:hover{border-color:#00e0ee;color:#00e0ee}.page-tool h3{font-size:20px}.page-tool p{font-size:14px}.page-tool .tool-note{font-size:12px;color:#a8abc3}.contact-link-icon{display:inline-flex;align-items:center;gap:12px}.contact-link-icon svg{width:22px;height:22px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7}
+.scroll-reveal{animation:sectionEnter .65s cubic-bezier(.16,1,.3,1) var(--reveal-delay,0ms) both}@keyframes sectionEnter{from{opacity:.4;translate:0 20px}to{opacity:1;translate:0 0}}
+/* Native navigation keeps links, authentication, and browser history intact. */
+@view-transition{navigation:auto}
+html{scroll-behavior:smooth;scroll-padding-top:110px}
+:target{scroll-margin-top:24px}
+::view-transition-old(root){animation:pageLeave .18s ease-out both}
+::view-transition-new(root){animation:pageArrive .45s cubic-bezier(.16,1,.3,1) both}
+@keyframes pageLeave{to{opacity:0}}
+@keyframes pageArrive{from{opacity:0;transform:translateY(18px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+/* Entry fallback also works in browsers without cross-document transitions. */
+body>main,body>.app-shell{animation:pageFadeIn .4s ease-out both}
+@keyframes pageFadeIn{from{opacity:.35}to{opacity:1}}
+.page.active{animation:sectionEnter .4s cubic-bezier(.16,1,.3,1) both}
+@media(max-width:760px){.expanded-footer{padding-top:38px!important}.footer-columns{gap:20px;padding-bottom:40px}.footer-columns a{font-size:12px}.footer-wordmark{padding-bottom:24px}.page-tool{padding:20px}.page-tool h2{font-size:22px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}.scroll-reveal,.page.active,body>main,body>.app-shell{animation:none!important}::view-transition-old(root),::view-transition-new(root){animation:none!important}}

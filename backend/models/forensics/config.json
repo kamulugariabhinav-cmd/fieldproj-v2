@@ -1,0 +1,7 @@
+{
+  "architectures": ["DeepfakeDetector"],
+  "model_type": "xlsr-aasist-deepfake-detector",
+  "backbone": "facebook/wav2vec2-xls-r-300m",
+  "pooling": "aasist",
+  "task": "audio-classification"
+}

@@ -1,0 +1,17 @@
+.model-picker{position:relative;width:100%;min-width:0}
+.model-picker-trigger{display:block;position:relative;width:100%;min-height:62px;padding:16px 48px 16px 20px;text-align:left;font:inherit;font-size:16px;line-height:1.5;color:var(--text);border:1px solid #accaff40;border-radius:13px;background:#0a1323;cursor:pointer;transition:border-color .18s,box-shadow .18s}
+.model-picker-trigger::after{content:"";position:absolute;right:22px;top:25px;width:8px;height:8px;border-right:2px solid var(--cyan);border-bottom:2px solid var(--cyan);transform:rotate(45deg);transition:transform .2s}
+.model-picker.is-open .model-picker-trigger::after{transform:translateY(4px) rotate(225deg)}
+.model-picker-trigger:hover,.model-picker.is-open .model-picker-trigger{border-color:var(--cyan);box-shadow:0 0 0 3px #00e0ee12}
+.model-picker-trigger:disabled{opacity:.55;cursor:not-allowed}
+.model-picker-list{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:50;max-height:min(350px,55dvh);overflow-y:auto;overscroll-behavior:contain;padding:7px;border:1px solid #00e0ee45;border-radius:15px;background:#0b1525;box-shadow:0 24px 60px #0009;animation:modelMenuEnter .18s ease-out both;scrollbar-color:#00aabd #0b1525}
+.model-picker-list[hidden]{display:none}
+.model-picker-option{position:relative;display:grid;gap:3px;min-height:65px;padding:12px 38px 12px 14px;border-radius:10px;cursor:pointer;color:var(--text);transition:background .15s}
+.model-picker-option strong{font-size:15px;font-weight:600}.model-picker-option span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.model-picker-option.is-highlighted{background:#00e0ee12}.model-picker-option[aria-selected=true]{background:#00e0ee0b}.model-picker-option[aria-selected=true] strong{color:var(--cyan)}
+.model-picker-option[aria-selected=true]::after{content:"";position:absolute;right:15px;top:28px;width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px #00e0ee55}
+.model-picker-option[aria-disabled=true]{opacity:.4;cursor:not-allowed}
+.model-picker-panel{overflow:visible!important}.model-picker-panel.model-picker-open{position:relative;z-index:20}
+@keyframes modelMenuEnter{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:760px){.model-picker-trigger{font-size:15px;padding-left:15px}.model-picker-list{max-height:300px}}
+@media(prefers-reduced-motion:reduce){.model-picker-list{animation:none}.model-picker-trigger,.model-picker-trigger::after,.model-picker-option{transition:none}}

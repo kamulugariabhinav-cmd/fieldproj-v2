@@ -1,0 +1,5 @@
+# CPU inference runtime; install torch from its official CPU wheel index.
+torch==2.5.1+cpu
+transformers==4.44.2
+numpy>=1.26,<3
+safetensors>=0.4
