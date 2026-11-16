@@ -3,6 +3,7 @@ import ipaddress
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 from urllib.parse import urlsplit
 
@@ -65,4 +66,13 @@ def build(output, origin=''):
 
 
 if __name__ == '__main__':
-    build(ROOT / '.vercel/output', os.getenv('VOICEGUARD_BACKEND_ORIGIN', ''))
+    origin = os.getenv('VOICEGUARD_BACKEND_ORIGIN', '').strip()
+    if not origin:
+        try:
+            vg_text = (ROOT / 'voiceguard.js').read_text(encoding='utf-8')
+            match = re.search(r'^const API_BASE = ["\'](https://[^"\']+)["\'];', vg_text, re.MULTILINE)
+            if match:
+                origin = match.group(1).rstrip('/')
+        except Exception:
+            origin = ''
+    build(ROOT / '.vercel/output', origin)
