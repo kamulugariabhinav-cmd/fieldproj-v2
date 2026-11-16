@@ -1,0 +1,11 @@
+-r requirements.txt
+-r voiceguard_addon/export-requirements.txt
+# Match the locally checked CPU model runtime. PyPI supplies ARM wheels;
+# the official PyTorch CPU index supplies x86 CPU wheels.
+torch==2.5.1
+torchaudio==2.5.1
+transformers==4.44.2
+numpy==1.26.4
+huggingface_hub>=0.24,<1
+safetensors>=0.4
+requests>=2.31

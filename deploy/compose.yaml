@@ -1,0 +1,40 @@
+name: voiceguard
+x-app: &app
+  image: voiceguard-server:local
+  build:
+    context: ..
+  environment:
+    HOST: 0.0.0.0
+    PORT: "8000"
+  volumes:
+    - weights:/app/voiceguard_addon/weights
+    - recovery:/app/voiceguard_addon/recovery
+    - cache:/app/cache
+    - data:/app/data
+services:
+  init:
+    <<: *app
+    profiles: [setup]
+    command: [python, -m, voiceguard_addon.prepare_server]
+  app:
+    <<: *app
+    restart: unless-stopped
+    expose: ["8000"]
+  https:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    environment:
+      SERVER_NAME: ${SERVER_NAME:?Set SERVER_NAME to the public backend hostname}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - tls:/data
+      - caddy-config:/config
+volumes:
+  weights:
+  recovery:
+  cache:
+  data:
+  tls:
+  caddy-config:
