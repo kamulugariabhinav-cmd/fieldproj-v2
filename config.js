@@ -6,10 +6,10 @@
     "use strict";
 
     window.__VOICEGUARD_CONFIG__ = {
-        API_BASE_URL: "https://anthony-proceeding-notre-procurement.trycloudflare.com"
+        API_BASE_URL: "https://invite-gasoline-niagara-trucks.trycloudflare.com"
     };
 
     window.getVoiceGuardApiBaseUrl = function () {
-        return "https://anthony-proceeding-notre-procurement.trycloudflare.com";
+        return "https://invite-gasoline-niagara-trucks.trycloudflare.com";
     };
 })();
