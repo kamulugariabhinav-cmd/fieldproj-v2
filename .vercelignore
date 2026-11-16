@@ -1,0 +1,21 @@
+# Only upload frontend build inputs to Vercel. Backend source stays in GitHub.
+*
+!build.js
+!package.json
+!package-lock.json
+!vercel.json
+!index.html
+!style.css
+!voiceguard.js
+!config.js
+!firebase-config.js
+!voiceguard_addon/
+voiceguard_addon/*
+!voiceguard_addon/__init__.py
+!voiceguard_addon/build_frontend.py
+!voiceguard_addon/pages.py
+!voiceguard_addon/ui.py
+!voiceguard_addon/presentation.py
+!voiceguard_addon/assets/
+!voiceguard_addon/assets/**
+voiceguard_addon/assets/**/*.map

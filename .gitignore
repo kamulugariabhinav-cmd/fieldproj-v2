@@ -84,3 +84,6 @@ voiceguard_addon/export_runtime.json
 *.aac
 *.mp4
 *.ogg
+
+# Vercel generated build output
+.vercel/

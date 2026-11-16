@@ -1,9 +1,7 @@
 """Opt-in server extending the original app without editing its source."""
 import asyncio
 import gc
-import json
 import logging
-import re
 import threading
 from pathlib import Path
 
@@ -11,8 +9,8 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
-from voiceguard_addon.ui import refine_html, refine_script, supporting_page
-from voiceguard_addon.presentation import polish
+from voiceguard_addon.ui import supporting_page
+from voiceguard_addon.pages import render_dashboard, render_home, render_script, render_public_config
 
 from voiceguard_addon import legacy as original
 from backend.audio_processor import decode_audio_bytes, AudioProcessingError
@@ -76,48 +74,18 @@ def run_inference(name, waveform):
 
 @app.get("/dashboard", include_in_schema=False)
 def dashboard(request: Request):
-    html = (ROOT / "index.html").read_text(encoding="utf-8")
-    marker = '<select id="modelSelect" class="field">'
-    if html.count(marker) != 1:
-        raise RuntimeError("Original model selector changed; update the optional add-on")
-    html = html.replace(marker, marker + '\n<option value="pella">Pella // PellaV2</option>'
-                        '\n<option value="nii">NII // AntiDeepfake MMS-300M</option>')
-    forensics_option = '<option value="forensics">Forensics // XLS-R Wild</option>'
-    html = html.replace(forensics_option, '').replace(marker, marker + '\n' + forensics_option)
-    default_model = 'forensics' if recovered_model_ready('forensics') else 'pella'
-    html = html.replace(f'<option value="{default_model}">', f'<option value="{default_model}" selected>')
-    if recovered_model_ready('prosdd'):
-        html=re.sub(r'(<option value="prosdd">).*?(</option>)',r'\1ProSDD // Official ASVspoof2019\2',html)
-    for name in ('prosdd', 'forensics'):
-        if missing_model_weights(name):
-            html = re.sub(r'<option value="' + name + r'">(.*?)</option>',
-                lambda match: '<option value="' + name + '" disabled>' + match[1] + ' (checkpoint missing)</option>', html)
-    return HTMLResponse(refine_html(html).replace('content="/assets/voiceguard-social.png"',
-        f'content="{request.base_url}assets/voiceguard-social.png"'), headers={"Cache-Control": "no-store"})
+    return HTMLResponse(render_dashboard(str(request.base_url), recovered_model_ready, missing_model_weights), headers={"Cache-Control": "no-store"})
 
 
 @app.get("/", include_in_schema=False)
 @app.get("/index.html", include_in_schema=False)
 def home(request: Request):
-    html = (ROOT / 'voiceguard_addon/assets/homepage.html').read_text(encoding='utf-8')
-    if recovered_model_ready('prosdd') and recovered_model_ready('forensics'):
-        html=html.replace('2 trained detectors','4 trained detectors')
-        html=html.replace('PellaV2 and NII AntiDeepfake have trained weights installed. The dashboard also lists ProSDD and Forensics; they stay unavailable until their required checkpoints are supplied.',
-            'Forensics XLS-R Wild, PellaV2, NII AntiDeepfake, and the official ProSDD ASVspoof2019 release are installed and have passed project-sample inference checks. The public ProSDD release is distinct from the private epoch-4 fine-tune previously configured here.')
-    return HTMLResponse(polish(html,'home').replace('content="/assets/voiceguard-social.png"',
-        f'content="{request.base_url}assets/voiceguard-social.png"'))
+    return HTMLResponse(render_home(str(request.base_url), recovered_model_ready))
 
 
 @app.get('/public-config.js', include_in_schema=False)
 def public_firebase_config():
-    source = (ROOT / 'voiceguard.js').read_text(encoding='utf-8')
-    config = {}
-    for key in ('apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'):
-        match = re.search(r'\b' + key + r':\s*"([^"]+)"', source)
-        if match:
-            config[key] = match[1]
-    return Response('window.VOICEGUARD_FIREBASE_CONFIG=' + json.dumps(config).replace('<','\\u003c') + ';',
-                    media_type='application/javascript')
+    return Response(render_public_config(), media_type="application/javascript")
 
 
 @app.get('/api/public-demo/{sample}', include_in_schema=False)
@@ -132,26 +100,7 @@ def public_audio_sample(sample: str):
 
 @app.get("/voiceguard.js", include_in_schema=False)
 def javascript():
-    source = (ROOT / "voiceguard.js").read_text(encoding="utf-8")
-    # The original points at a fixed external tunnel. The opt-in server must
-    # send uploads to its own Pella/NII endpoints instead.
-    source, count = re.subn(r'^const API_BASE = [^\n]+;', 'const API_BASE = "";', source,
-                            count=1, flags=re.MULTILINE)
-    if count != 1:
-        raise RuntimeError("Original API configuration changed; update the optional add-on")
-    replacements = {
-        'const forensics = data.model_name === "Forensics-XLSR-Wild";':
-        'const addon = ["PellaV2", "NII-AntiDeepfake", "ProSDD-Official-ASV2019"].includes(data.model_name);\n'
-        '  const forensics = addon || data.model_name === "Forensics-XLSR-Wild";',
-        'forensics ? "XLS-R Wild" : "ProSDD"':
-        'addon ? data.model_name : (forensics ? "XLS-R Wild" : "ProSDD")',
-    }
-    for old, new in replacements.items():
-        if source.count(old) != 1:
-            raise RuntimeError("Original result renderer changed; update the optional add-on")
-        source = source.replace(old, new)
-    return Response(refine_script(source), media_type="application/javascript",
-                    headers={"Cache-Control": "no-store"})
+    return Response(render_script(), media_type="application/javascript", headers={"Cache-Control": "no-store"})
 
 
 @app.get("/config.js", include_in_schema=False)
