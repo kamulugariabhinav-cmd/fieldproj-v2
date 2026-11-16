@@ -6,10 +6,10 @@
     "use strict";
 
     window.__VOICEGUARD_CONFIG__ = {
-        API_BASE_URL: ""
+        API_BASE_URL: "https://anthony-proceeding-notre-procurement.trycloudflare.com"
     };
 
     window.getVoiceGuardApiBaseUrl = function () {
-        return "";
+        return "https://anthony-proceeding-notre-procurement.trycloudflare.com";
     };
 })();
