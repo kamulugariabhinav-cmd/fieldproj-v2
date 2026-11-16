@@ -1,0 +1,6 @@
+/* Independent from the application's .hidden utility; content is readable before JS. */
+.text-scroll-enter{--text-depth:160px;--text-angle:30deg;animation:textScrollHeading .8s ease both!important;transform-origin:center;backface-visibility:hidden}
+p.text-scroll-enter{animation-name:textScrollCopy!important;animation-delay:.1s!important}
+@keyframes textScrollHeading{from{opacity:0;transform:perspective(800px) translate3d(0,0,var(--text-depth)) rotateY(calc(-1 * var(--text-angle)))}to{opacity:1;transform:perspective(800px) translate3d(0,0,0) rotateY(0)}}
+@keyframes textScrollCopy{from{opacity:0;transform:perspective(800px) translate3d(0,0,var(--text-depth)) rotateY(var(--text-angle))}to{opacity:1;transform:perspective(800px) translate3d(0,0,0) rotateY(0)}}
+@media(max-width:760px){.text-scroll-enter{--text-depth:60px;--text-angle:16deg;animation-duration:.65s!important}}

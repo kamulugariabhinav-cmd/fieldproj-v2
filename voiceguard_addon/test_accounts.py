@@ -1,12 +1,33 @@
 import base64,json,sqlite3,time
 from unittest.mock import AsyncMock,patch
 import pytest
+import httpx
 from fastapi.testclient import TestClient
 from voiceguard_addon.app import app
 from voiceguard_addon.test_database import database
 
 HEADERS={'X-VoiceGuard-Client':'1','Authorization':'Bearer token'}
 ALICE={'localId':'alice','displayName':'Alice','email':'alice@example.test'}
+
+
+def test_signup_username_check_rejects_duplicates_without_creating_accounts(database):
+    client=TestClient(app)
+    headers={'X-VoiceGuard-Client':'1'}
+    assert client.post('/api/auth/check-username',headers=headers,json={'username':'reader_1'}).json()=={'available':True}
+    with patch('voiceguard_addon.database.verify_firebase',new=AsyncMock(return_value=ALICE)):
+        assert client.post('/api/user/profile',headers=HEADERS,json={'username':'reader_1'}).status_code==200
+    assert client.post('/api/auth/check-username',headers=headers,json={'username':'READER_1'}).status_code==409
+    assert client.post('/api/auth/check-username',headers=headers,json={'username':'another_reader'}).status_code==200
+    assert client.post('/api/auth/check-username',headers=headers,json={'username':'bad name'}).status_code==400
+    assert client.post('/api/auth/check-username',json={'username':'reader_1'}).status_code==403
+
+
+@pytest.mark.parametrize('body', [b'not-json', b'[]', b'null'])
+def test_malformed_firebase_login_reply_returns_service_error(database, body):
+    with patch('httpx.AsyncClient.post', new=AsyncMock(return_value=httpx.Response(200, content=body))):
+        response = TestClient(app).post('/api/auth/username-login', headers={'X-VoiceGuard-Client':'1'},
+            json={'username':'reader_1','password':'example'})
+    assert response.status_code == 503
 
 def test_profiles_are_unique_and_private(database):
     client=TestClient(app)

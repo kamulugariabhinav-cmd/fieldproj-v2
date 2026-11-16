@@ -1,0 +1,7 @@
+/* No hidden initial state: content works without animation scripts. */
+.spatial-ui .capability,.spatial-ui .workflow-steps>li,.spatial-ui .listening-demo{transition-property:border-color,background-color,box-shadow}
+@media(min-width:761px){
+  .workflow-steps{position:relative}
+  .workflow-steps::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;pointer-events:none;background:linear-gradient(90deg,var(--cyan),var(--pink));transform-origin:left;transform:scaleX(var(--workflow-progress,1))}
+}
+@media(max-width:760px){.model-explorer,.listening-demo{max-width:100%;min-width:0}}

@@ -26,6 +26,34 @@ secrets belong in Firebase Console, never in frontend code or this chat.
 
 References:
 - https://firebase.google.com/docs/auth/web/github-auth
+
+## Signup requirements
+
+The signup form requires at least eight characters, including an uppercase ASCII
+letter, a lowercase ASCII letter, a number, and a non-space symbol. Password
+confirmation must match. Existing sign-in passwords are not subjected to new
+signup rules. Passwords are sent only to Firebase, never to the username-check
+endpoint or the profile database.
+
+Usernames contain 3–30 letters, numbers, or underscores. They are normalized to
+lowercase and protected by SQLite's unique constraint. The form checks
+availability before creating a Firebase account; the unique constraint remains
+authoritative if two people choose the same name simultaneously. Firebase's
+duplicate-email error is shown without creating another password account.
+
+Required Firebase project configuration (needs project-owner console access):
+
+1. In Authentication → Settings → Password policy, require a minimum length of
+   8, uppercase, lowercase, numeric, and non-alphanumeric characters. Use
+   enforcement mode so direct Firebase clients and password resets follow the
+   same rules; form-side checks alone cannot enforce a Firebase project policy.
+2. In Authentication → Settings → User account linking, select one account per
+   email address. Otherwise Firebase can allow separate provider accounts with
+   the same email address. Link providers to an existing account instead of
+   creating duplicate identities.
+
+These console settings were not changed by the local code update.
+Official policy reference: https://firebase.google.com/docs/auth/web/password-auth
 - https://firebase.google.com/docs/auth/web/password-auth
 
 Client tests:

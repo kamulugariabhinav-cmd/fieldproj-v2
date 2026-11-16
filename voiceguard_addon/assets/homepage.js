@@ -132,12 +132,10 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)audio.pause
 
 // Procedural 3D signal sculpture. Decorative; it never claims to classify audio.
 async function setupSignal(){
-  const mount=document.getElementById('heroSignal'),stage=document.getElementById('signalStage'),motion=document.getElementById('signalMotion');
-  const reduce=matchMedia('(prefers-reduced-motion: reduce)');let paused=reduce.matches,visible=true;
+  const mount=document.getElementById('heroSignal'),stage=document.getElementById('signalStage');
+  let visible=true;
   const energyControl=document.getElementById('signalEnergy'),shapeControl=document.getElementById('signalShape');
   let energy=.13,shape='orb';
-  function syncMotion(){motion.textContent=paused?'Resume motion ▷':'Pause motion Ⅱ';motion.setAttribute('aria-label',paused?'Resume signal animation':'Pause signal animation');motion.setAttribute('aria-pressed',String(paused));}
-  syncMotion();
   try{
     const THREE=await import('/assets/three.module.js');
     const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'low-power'});
@@ -178,19 +176,14 @@ async function setupSignal(){
     const resizeObserver=new ResizeObserver(resize);resizeObserver.observe(mount);
     const observer=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;},{threshold:.05});observer.observe(stage);
     stage.tabIndex=0;stage.setAttribute('aria-label','Interactive voice signal illustration. Use arrow keys to rotate.');
-    stage.addEventListener('pointermove',event=>{if(reduce.matches||paused||event.target.closest('button,input'))return;const rect=stage.getBoundingClientRect();targetY=(event.clientX-rect.left)/rect.width*.8-.4;targetX=(event.clientY-rect.top)/rect.height*.5-.25;});
+    stage.addEventListener('pointermove',event=>{if(event.target.closest('button,input'))return;const rect=stage.getBoundingClientRect();targetY=(event.clientX-rect.left)/rect.width*.8-.4;targetX=(event.clientY-rect.top)/rect.height*.5-.25;});
     stage.addEventListener('keydown',event=>{if(event.target!==stage)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();targetY+=event.key==='ArrowRight'?.15:event.key==='ArrowLeft'?-.15:0;targetX+=event.key==='ArrowDown'?.15:event.key==='ArrowUp'?-.15:0;}});
-    motion.addEventListener('click',()=>{
-      paused=!paused;last=performance.now();syncMotion();
-      if(!paused){visible=true;if(!frameId)frameId=requestAnimationFrame(frame);}
-    });
     energyControl.addEventListener('input',()=>{energy=.02+Number(energyControl.value)/100*.25;document.getElementById('signalEnergyValue').textContent=energyControl.value;update();renderer.render(scene,camera);});
     shapeControl.addEventListener('click',()=>{shape=shape==='orb'?'wave':'orb';shapeControl.textContent=shape==='orb'?'Wave view':'Orb view';shapeControl.setAttribute('aria-pressed',String(shape==='wave'));center.visible=shape==='orb';update();renderer.render(scene,camera);});
-    reduce.addEventListener('change',()=>{paused=reduce.matches;syncMotion();});
     function frame(now){
       frameId=requestAnimationFrame(frame);const delta=Math.min((now-last)/1000,.05);last=now;
       if(!visible||document.hidden)return;
-      if(!paused){
+      {
         const scrollProgress=Number(stage.dataset?.scrollProgress||0);
         time+=delta;update();center.rotation.y+=delta*.25;
         group.rotation.x+=(targetX+Math.sin(time*.5)*.06+scrollProgress*.22-group.rotation.x)*.05;
@@ -205,6 +198,6 @@ async function setupSignal(){
       if(!event.persisted){observer.disconnect();resizeObserver.disconnect();scene.traverse(obj=>{obj.geometry?.dispose();obj.material?.dispose();});renderer.dispose();}
     });
     window.addEventListener('pageshow',event=>{if(event.persisted){last=performance.now();visible=true;resize();if(!frameId)frameId=requestAnimationFrame(frame);}});
-  }catch(error){motion.hidden=true;energyControl.disabled=true;shapeControl.disabled=true;stage.querySelector('.art-instruction').textContent='VoiceGuard / signal illustration';}
+  }catch(error){energyControl.disabled=true;shapeControl.disabled=true;stage.querySelector('.art-instruction').textContent='VoiceGuard / signal illustration';}
 }
 setupSignal();

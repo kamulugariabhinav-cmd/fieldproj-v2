@@ -1,13 +1,4 @@
 (() => {
-  if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&'IntersectionObserver' in window){
-    const observer=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('scroll-reveal');observer.unobserve(entry.target);}});},{threshold:.08});
-    document.querySelectorAll('main>section,.dashboard-grid>.panel,.support-page main>h1,.support-page main>h2,.support-page main>p,.page-tool,.footer-columns,.footer-wordmark').forEach(element=>{
-      observer.observe(element);
-      element.querySelectorAll('article,.workflow-steps>li,.section-heading>h2,.section-heading>p,.feature-card,.step,.model-card,.footer-columns>div').forEach((child,index)=>{
-        child.style.setProperty('--reveal-delay',`${Math.min(index,4)*70}ms`);observer.observe(child);
-      });
-    });
-  }
   const descriptions={
     pella:['PellaV2','Wav2Vec2 Base, fine-tuned for real/fake speech classification. Audio is normalized by its feature extractor.'],
     nii:['NII AntiDeepfake','MMS-300M with a trained binary classifier. Uses waveform layer normalization and mean-pooled speech features.'],

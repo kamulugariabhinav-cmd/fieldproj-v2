@@ -73,7 +73,18 @@ async def verify_firebase(token):
         if result.status_code >= 500:
             raise HTTPException(503, 'Firebase verification is temporarily unavailable.')
         raise HTTPException(401, 'Your sign-in could not be verified. Sign in again.')
-    users = result.json().get('users', [])
+    try:
+        data = result.json()
+        if not isinstance(data, dict) or not isinstance(data.get('users', []), list):
+            raise ValueError('Invalid account response')
+        users = data.get('users', [])
+        if any(not isinstance(user, dict) for user in users):
+            raise ValueError('Invalid account response')
+        for user in users:
+            if any(not isinstance(user.get(field, ''), str) for field in ('localId', 'displayName', 'email')):
+                raise ValueError('Invalid account fields')
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(503, 'Firebase returned an unreadable account response. Try again later.') from exc
     if len(users) != 1 or not users[0].get('localId') or users[0].get('disabled'):
         raise HTTPException(401, 'Invalid Firebase account.')
     return users[0]

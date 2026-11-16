@@ -22,6 +22,21 @@ def test_interface_additions():
     for model in ("pella", "nii", "prosdd", "forensics"):
         assert f'value="{model}"' in html
     js = client.get("/voiceguard.js").text
+    assert '/voiceguard.js?v=local-8' in html
+    assert client.get('/dashboard').headers['cache-control'] == 'no-store'
+    assert client.get('/voiceguard.js?v=local-8').headers['cache-control'] == 'no-store'
+    assert 'AI SPEECH SCORE' not in html and 'id="aiScore"' not in html
+    assert 'id="scoreBar"' not in html
+    assert '"AI voice detected" : "Human voice detected"' in js
+    assert '$("aiScore")' not in js and '$("scoreBar")' not in js
+    assert '/assets/dashboard-usability.css?v=6' in html
+    for metric in ('resultModel', 'duration', 'windows', 'inferenceTime'):
+        assert f'id="{metric}"' in html
+    assert 'liveActive=false;liveToken++;\n  clearResults();' in js
+    assert js.count('fetchDetection(`${API_BASE}/api/detect`,') == 2
+    assert 'id="accountMenuEmail"' in html and 'id="accountMenuLogout"' in html
+    assert '/assets/account-menu.js?v=1' in html
+    assert '$("accountBtn").addEventListener("click", () => setPage("profile"));' not in js
     assert 'const API_BASE = "";' in js
     assert 'const API_BASE = "https://' not in js
     assert 'const addon = ["PellaV2", "NII-AntiDeepfake", "ProSDD-Official-ASV2019"]' in js
@@ -97,15 +112,16 @@ def test_pause_freezes_wave_time_and_rotation():
     frame = re.search(r'function frame\(\)\{[^\n]+', source).group(0)
     script = '''const vm=require('node:vm');const assert=require('node:assert/strict');
 const context=vm.createContext({document:{hidden:false},coreVisible:true,requestAnimationFrame:()=>{},clock:{getDelta:()=>.02},
-motionTime:0,spin:true,drag:false,scanning:false,group:{rotation:{y:0}},
+motionTime:0,spin:true,drag:false,scanning:false,signalShape:'wave',group:{rotation:{y:0}},
 updateWaves:t=>{},renderer:{render:()=>{}},scene:{},camera:{}});
 vm.runInContext(FRAME,context);vm.runInContext('frame()',context);
 const t=context.motionTime,r=context.group.rotation.y;
-assert(t>0);context.spin=false;vm.runInContext('frame()',context);
+assert(t>0);assert.equal(r,0,'Wave ripples animate without rotating');context.spin=false;vm.runInContext('frame()',context);
 assert.equal(context.motionTime,t);assert.equal(context.group.rotation.y,r);
 context.spin=true;vm.runInContext('frame()',context);assert(context.motionTime>t);
 const activeTime=context.motionTime;context.document.hidden=true;vm.runInContext('frame()',context);assert.equal(context.motionTime,activeTime);
 context.document.hidden=false;context.coreVisible=false;vm.runInContext('frame()',context);assert.equal(context.motionTime,activeTime);
+context.coreVisible=true;context.signalShape='orb';vm.runInContext('frame()',context);assert(context.group.rotation.y>0,'Orb rotation is retained');
 '''.replace('FRAME', json.dumps(frame))
     subprocess.run(['node', '-e', script], check=True, capture_output=True)
 

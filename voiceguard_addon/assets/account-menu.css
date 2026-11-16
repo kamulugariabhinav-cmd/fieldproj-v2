@@ -1,0 +1,18 @@
+.topbar{position:relative;z-index:30}
+.account-menu{position:relative}
+.account-menu-panel{position:absolute;right:0;top:calc(100% + 12px);width:min(300px,calc(100vw - 40px));padding:20px;border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:0 18px 55px color-mix(in srgb,var(--bg) 80%,transparent);z-index:60;animation:accountMenuEnter .16s ease-out}
+.account-menu-panel::before{content:"";position:absolute;inset:-14px 0 auto;height:14px}
+.account-menu-panel[hidden],.account-menu-panel [hidden]{display:none!important}
+.account-menu-caption{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+#accountMenuEmail{display:block;overflow-wrap:anywhere;font-size:14px;line-height:1.6;margin-bottom:16px}
+.account-menu-panel button,.account-menu-panel a{display:block;width:100%;min-height:44px;padding:10px 12px;text-align:left;font:inherit;font-size:13px;color:var(--text);background:transparent;border:0;border-radius:8px;cursor:pointer;text-decoration:none}
+.account-menu-panel button:hover,.account-menu-panel a:hover{background:color-mix(in srgb,var(--cyan) 7%,transparent)}
+.account-menu-panel :is(button,a):focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+#accountMenuLogout{color:var(--pink)}
+#accountMenuStatus{font-size:12px;color:var(--muted);margin:8px 0 0}
+#accountMenuStatus:empty{display:none}
+@keyframes accountMenuEnter{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.account-menu-panel{animation:none}}
+.reduce-transitions .account-menu-panel{animation:none}
+
+

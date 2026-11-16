@@ -23,7 +23,10 @@ async def firebase_call(method,data):
             response=await client.post('https://identitytoolkit.googleapis.com/v1/accounts:'+method,params={'key':firebase_api_key()},json=data)
     except httpx.HTTPError as exc:
         raise HTTPException(503,'Firebase could not be reached. Check your connection and try again.') from exc
-    try:return response.status_code,response.json()
+    try:
+        result=response.json()
+        if not isinstance(result,dict):raise ValueError('Invalid Firebase response')
+        return response.status_code,result
     except ValueError as exc:raise HTTPException(503,'Firebase returned an unreadable response. Try again later.') from exc
 
 def username(value):
@@ -41,6 +44,16 @@ def throttle(request,name):
             row=db.execute('SELECT attempts FROM auth_attempts WHERE bucket=?',(key,)).fetchone()
             if row and row[0]>=limit:raise HTTPException(429,'Too many sign-in attempts. Wait 15 minutes before trying again.')
             db.execute('INSERT INTO auth_attempts VALUES(?,?,1) ON CONFLICT(bucket) DO UPDATE SET attempts=attempts+1',(key,now))
+
+@router.post('/api/auth/check-username')
+async def check_username(request:Request,response:Response):
+    data=await account_payload(request)
+    name=username(data.get('username'))
+    with connect() as db:
+        taken=db.execute('SELECT 1 FROM account_profiles WHERE username=?',(name,)).fetchone()
+    response.headers['Cache-Control']='no-store'
+    if taken:raise HTTPException(409,'This username is already taken. Choose another.')
+    return {'available':True}
 
 @router.post('/api/auth/username-login')
 async def username_login(request:Request,response:Response):

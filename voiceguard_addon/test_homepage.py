@@ -65,3 +65,17 @@ def test_only_public_firebase_configuration_is_exposed():
     assert set(config)=={'apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'}
     assert config['projectId']=='voiceguard-61a95'
     assert 'private_key' not in response.text
+def test_landing_gsap_assets_are_scoped_to_home():
+    from fastapi.testclient import TestClient
+    from voiceguard_addon.app import app
+    client = TestClient(app)
+    home = client.get('/').text
+    assets = ['/assets/vendor/gsap/gsap.min.js', '/assets/vendor/gsap/ScrollTrigger.min.js', '/assets/landing-motion.js?v=3']
+    assert home.index(assets[0]) < home.index(assets[1]) < home.index(assets[2])
+    assert '/assets/text-scroll.js' not in home
+    assert '/assets/spatial.js' not in home
+    for asset in assets + ['/assets/landing-motion.css?v=1']:
+        assert client.get(asset).status_code == 200
+    dashboard = client.get('/dashboard').text
+    assert '/assets/landing-motion.js' not in dashboard
+    assert '/assets/text-scroll.js' in dashboard

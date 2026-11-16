@@ -3,6 +3,7 @@ import sqlite3
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import httpx
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
@@ -11,6 +12,15 @@ from voiceguard_addon.app import app
 HEADERS = {'X-VoiceGuard-Client':'1'}
 RECORD = {'id':'sample-1','date':'2026-11-12T10:00:00Z','filename':'sample.wav',
           'model':'PellaV2','score':2.5,'prediction':'Human Detected'}
+
+
+@pytest.mark.parametrize('body', [b'not-json', b'[]', b'{"users":{}}', b'{"users":[null]}', b'{"users":[{"localId":{},"email":[]}]}'])
+def test_malformed_firebase_lookup_is_unavailable_not_an_internal_error(body):
+    upstream = httpx.Response(200, content=body)
+    with patch('httpx.AsyncClient.post', new=AsyncMock(return_value=upstream)):
+        response = TestClient(app).get('/api/user', headers={'Authorization':'Bearer example'})
+    assert response.status_code == 503
+    assert 'unreadable' in response.json()['detail']
 
 
 @pytest.fixture

@@ -9,18 +9,17 @@ const THREE={WebGLRenderer:Renderer,Scene:class{add(){}traverse(){}},Group,Persp
 BufferGeometry:Geometry,BufferAttribute:class{constructor(array){this.array=array;}},LineBasicMaterial:class{},Line:class{},
 Mesh:class{constructor(){this.rotation={x:0,y:0,z:0};this.position={set(){}};}},IcosahedronGeometry:Geometry,TorusGeometry:Geometry,MeshBasicMaterial:class{},MeshStandardMaterial:class{},HemisphereLight:class{},PointLight:class{constructor(){this.position={set(){}};}}};
 const context=vm.createContext({THREE,document:{hidden:false,getElementById:node},devicePixelRatio:1,
-window:{addEventListener(event,fn){events[event]=fn;}},matchMedia:()=>({matches:false,addEventListener(){}}),
+window:{addEventListener(event,fn){events[event]=fn;}},matchMedia:()=>({matches:true,addEventListener(){}}),
 ResizeObserver:class{observe(){}disconnect(){}},IntersectionObserver:class{observe(){}disconnect(){}},
 performance:{now:()=>clock},requestAnimationFrame:fn=>(nextFrame=fn,++id),cancelAnimationFrame(){nextFrame=null;},console});
 let source=fs.readFileSync(__dirname+'/assets/homepage.js','utf8');source=source.slice(source.indexOf('async function setupSignal()'));
 source=source.replace("await import('/assets/three.module.js')",'await Promise.resolve(globalThis.THREE)');
 (async()=>{
 vm.runInContext(source,context);await new Promise(resolve=>setImmediate(resolve));
-assert.equal(typeof node('signalMotion').events.click,'function');
+assert(!nodes.has('signalMotion'),'No pause button is read or created');
 clock=100;nextFrame(clock);const moving=groups[0].rotation.y;assert(moving>0);
-node('signalMotion').events.click();clock=200;nextFrame(clock);assert.equal(groups[0].rotation.y,moving);assert.match(node('signalMotion').textContent,/Resume/);
-node('signalMotion').events.click();clock=300;nextFrame(clock);assert(groups[0].rotation.y>moving);assert.match(node('signalMotion').textContent,/Pause/);
+clock=200;nextFrame(clock);assert(groups[0].rotation.y>moving,'Motion continues even with OS reduced motion');
 events.pagehide({persisted:true});assert.equal(disposed,false);assert.equal(nextFrame,null);
 events.pageshow({persisted:true});assert.equal(typeof nextFrame,'function');
-console.log('Signal motion: rotation advances, pause freezes, resume restarts, and browser-back restoration passed.');
+console.log('Signal motion: always-on rotation and browser-back restoration passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

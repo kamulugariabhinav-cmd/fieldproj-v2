@@ -60,7 +60,12 @@ def decode_audio_bytes(audio_bytes: bytes, filename: str = "audio.wav") -> Tuple
 
     # First strategy: try soundfile (fast for WAV, MP3, FLAC, OGG)
     try:
-        data, sr = sf.read(io.BytesIO(audio_bytes), always_2d=False, dtype='float32')
+        with sf.SoundFile(io.BytesIO(audio_bytes)) as source:
+            sr = source.samplerate
+            limit = int(MAX_DURATION_SECONDS * sr)
+            if source.frames > limit:
+                raise AudioProcessingError('AUDIO_TOO_LONG', f'Recording exceeds maximum allowed ({MAX_DURATION_SECONDS}s).')
+            data = source.read(frames=limit + 1, always_2d=False, dtype='float32')
         orig_sr = sr
         if data.ndim == 1:
             waveform = data
@@ -68,37 +73,34 @@ def decode_audio_bytes(audio_bytes: bytes, filename: str = "audio.wav") -> Tuple
         else:
             orig_channels = data.shape[1]
             waveform = np.mean(data, axis=1)  # Convert stereo to mono
+    except AudioProcessingError:
+        raise
     except Exception:
         # Second strategy: Fallback to PyAV (robust for WebM/Opus, M4A/AAC, MP4, etc.)
         try:
-            container = av.open(io.BytesIO(audio_bytes))
-            audio_streams = [s for s in container.streams if s.type == 'audio']
-            if not audio_streams:
-                raise AudioProcessingError("NO_AUDIO_STREAM", "No audio stream found in the uploaded media container.")
-            
-            stream = audio_streams[0]
-            orig_sr = stream.rate or 16000
-            orig_channels = stream.channels or 1
-
-            pcm_frames = []
-            for frame in container.decode(stream):
-                arr = frame.to_ndarray()
-                if arr.ndim > 1:
-                    arr = np.mean(arr, axis=0)
-                pcm_frames.append(arr.astype(np.float32))
-
-            container.close()
+            with av.open(io.BytesIO(audio_bytes)) as container:
+                audio_streams = container.streams.audio
+                if not audio_streams:
+                    raise AudioProcessingError("NO_AUDIO_STREAM", "No audio stream found in the uploaded media container.")
+                stream = audio_streams[0]
+                orig_sr = stream.rate or MODEL_SAMPLE_RATE
+                orig_channels = len(stream.codec_context.layout.channels) or 1
+                resampler = av.AudioResampler(format='fltp', layout='mono', rate=orig_sr)
+                pcm_frames = []
+                samples = 0
+                for frame in container.decode(stream):
+                    for mono in resampler.resample(frame):
+                        samples += mono.samples
+                        if samples > MAX_DURATION_SECONDS * orig_sr:
+                            raise AudioProcessingError('AUDIO_TOO_LONG', f'Recording exceeds maximum allowed ({MAX_DURATION_SECONDS}s).')
+                        pcm_frames.append(mono.to_ndarray().reshape(-1))
+                pcm_frames.extend(frame.to_ndarray().reshape(-1) for frame in resampler.resample(None))
 
             if not pcm_frames:
                 raise AudioProcessingError("EMPTY_AUDIO", "Audio container contains no decodable audio frames.")
 
             raw_waveform = np.concatenate(pcm_frames)
             
-            # Normalize int formats to [-1.0, 1.0] if needed
-            max_val = np.max(np.abs(raw_waveform))
-            if max_val > 1.5:
-                raw_waveform = raw_waveform / 32768.0
-
             waveform = raw_waveform.astype(np.float32)
         except AudioProcessingError:
             raise
@@ -125,6 +127,9 @@ def decode_audio_bytes(audio_bytes: bytes, filename: str = "audio.wav") -> Tuple
             f"Recording duration ({duration:.2f}s) exceeds maximum allowed ({MAX_DURATION_SECONDS}s)."
         )
 
+    # Sanitize before energy checks so NaN samples cannot bypass silence validation.
+    waveform = np.nan_to_num(waveform, nan=0.0, posinf=1.0, neginf=-1.0)
+
     # Detect silence / dead mic
     rms = float(np.sqrt(np.mean(waveform ** 2)))
     peak = float(np.max(np.abs(waveform)))
@@ -133,9 +138,6 @@ def decode_audio_bytes(audio_bytes: bytes, filename: str = "audio.wav") -> Tuple
             "SILENT_AUDIO",
             f"Recording appears silent or contains no detectable voice (RMS: {rms:.5f}, Peak: {peak:.5f}). Please speak closer to microphone."
         )
-
-    # Sanitize NaN / Inf
-    waveform = np.nan_to_num(waveform, nan=0.0, posinf=1.0, neginf=-1.0)
 
     stats = {
         "original_sample_rate": orig_sr,

@@ -1,0 +1,24 @@
+/* Keep native scrolling while hiding the tracks, including nested panels. */
+*,*::before,*::after{scrollbar-width:none!important}
+*::-webkit-scrollbar{display:none;width:0;height:0}
+.sidebar{height:100dvh;max-height:100dvh;min-height:0;overflow-y:auto;overscroll-behavior-y:contain}
+.sidebar>*{flex-shrink:0}
+.app-shell.sidebar-collapsed .nav-link{display:flex;align-items:center;justify-content:center;width:52px;height:52px;min-height:52px;padding:0;gap:0;margin-inline:auto;box-sizing:border-box}
+.app-shell.sidebar-collapsed .nav-link>span:first-child{display:flex;align-items:center;justify-content:center;width:22px;height:22px;flex:none}
+.app-shell.sidebar-collapsed .nav-link.active{position:relative;box-shadow:none}
+.app-shell.sidebar-collapsed .nav-link.active::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 3px 0 0 var(--cyan),0 0 14px color-mix(in srgb,var(--cyan) 18%,transparent);pointer-events:none;animation:sidebarActiveLight 2.8s ease-in-out infinite!important}
+@keyframes sidebarActiveLight{0%,100%{opacity:.6}50%{opacity:1}}
+#showDeveloperLinks{border:0;background:transparent;box-shadow:none}
+#showDeveloperLinks:focus:not(:focus-visible){outline:none}
+#showDeveloperLinks:focus-visible{outline:2px solid var(--cyan);outline-offset:4px}
+#resultContent .result-top{display:block;margin:24px 0}
+#resultContent .verdict{font-size:clamp(24px,4vw,40px);line-height:1.3;text-align:left;text-transform:none}
+#resultContent #warnings{display:none}
+.spatial-ui .history-row{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 1fr auto}
+.settings-card .model-picker-trigger{margin-top:0}
+.model-picker-trigger:focus-visible{outline:2px solid var(--cyan);outline-offset:4px}
+.live-pill.is-detecting{animation:detectionPulse 1.4s ease-in-out infinite;color:var(--cyan)}
+@keyframes detectionPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.reduce-transitions .live-pill.is-detecting{animation:none;text-shadow:0 0 12px currentColor}
+@media(prefers-reduced-motion:reduce){.live-pill.is-detecting{animation:none;text-shadow:0 0 12px currentColor}}
+@media(prefers-reduced-motion:reduce){.model-picker-list,.model-picker-trigger{animation:none;transition:none}}

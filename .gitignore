@@ -26,6 +26,7 @@ venv/
 env/
 ENV/
 .venv/
+.runtime-py311/
 
 # Node modules
 node_modules/

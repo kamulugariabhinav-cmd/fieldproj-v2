@@ -26,20 +26,42 @@ def metadata(title="VoiceGuard | Speech deepfake detection", description=DESCRIP
 
 
 def refine_html(html):
+    html=html.replace('NEURAL DEFENSE // V2','NEURAL DEFENSE')
+    html=html.replace('Holographic Wave Field','Holographic Signal')
+    html=html.replace('<button class="ghost-button" id="resetCore">',
+        '<button class="ghost-button" id="coreShape" aria-pressed="true">Orb view</button><button class="ghost-button" id="resetCore">')
+    html=html.replace('Interactive 3D neon waves; drag to rotate and scroll to zoom','Animated signal waves; Ctrl-scroll to zoom')
+    html=html.replace('DRAG TO ROTATE WAVES','<span id="coreInteractionHint">ANIMATED SIGNAL WAVES</span>')
+    account_panel='''<div class="account-menu-panel" id="accountMenuPanel" role="region" aria-label="Account options" hidden>
+<span class="account-menu-caption" id="accountMenuCaption">Guest session</span>
+<strong id="accountMenuEmail">Not signed in</strong>
+<button type="button" id="accountMenuProfile">View profile</button>
+<button type="button" id="accountMenuLogout" hidden>Log out</button>
+<a id="accountMenuSignin" href="/?signin=1">Sign in</a>
+<p id="accountMenuStatus" role="status"></p></div>'''
+    html=re.sub(r'(<button class="account-button" id="accountBtn"[^>]*>.*?</button>)',
+        lambda m:'<div class="account-menu">'+m[1]+account_panel+'</div>',html,flags=re.S)
+    html=html.replace('id="accountBtn" aria-label="Open profile"',
+        'id="accountBtn" aria-label="Account options" aria-expanded="false" aria-controls="accountMenuPanel"')
+    html=html.replace('</head>','<link rel="stylesheet" href="/assets/account-menu.css?v=1"></head>')
+    html=html.replace('</body>','<script src="/assets/account-menu.js?v=1" defer></script></body>')
     settings=(Path(__file__).parent/'assets/settings.html').read_text(encoding='utf-8')
     html=html.replace('<section class="page" id="profilePage">',settings+'<section class="page" id="profilePage">')
     settings_nav='<div class="settings-nav"><button class="nav-link" data-page="settings" aria-label="Settings"><span><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 3-1 3-3 1-2 5 2 5 3 1 1 3h6l1-3 3-1 2-5-2-5-3-1-1-3z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="settings-nav-label">Settings</span><small>04</small></button></div>'
     html=html.replace('<div class="side-bottom">',settings_nav+'<div class="side-bottom">')
     html=html.replace('</head>','<link rel="stylesheet" href="/assets/settings.css?v=2"></head>')
     html=html.replace('</body>','<script src="/assets/settings.js?v=2" defer></script></body>')
-    html=html.replace('</head>','<link rel="stylesheet" href="/assets/model-select.css?v=1"></head>')
-    html=html.replace('</body>','<script src="/assets/model-select.js?v=1" defer></script></body>')
+    html=html.replace('</head>','<link rel="stylesheet" href="/assets/model-select.css?v=3"></head>')
+    html=html.replace('</body>','<script src="/assets/model-select.js?v=3" defer></script></body>')
+    html=html.replace('</head>','<link rel="stylesheet" href="/assets/dashboard-usability.css?v=6"></head>')
+    html=re.sub(r'<div class="result-top">.*?<div class="score-track"><div id="scoreBar"></div></div>',
+        '<div class="result-top"><div class="verdict" id="prediction" role="status" aria-live="polite">Awaiting analysis</div></div>',html,flags=re.S)
     html=re.sub(r'<span[^>]*>[^<]*3D INTERACTIVE</span>', '', html)
     html=html.replace('SCROLL TO ZOOM','CTRL + SCROLL TO ZOOM')
     html = re.sub(r'<div class="metric" id="thresholdMetric">.*?</div>', '', html, flags=re.S)
     html = re.sub(r'<meta name="description"[^>]*>', metadata(), html)
     html = html.replace('</head>', '<link rel="stylesheet" href="/assets/refinements.css"></head>')
-    html = html.replace('<script src="voiceguard.js" defer></script>', '<script src="voiceguard.js" defer></script><script src="/assets/database.js" defer></script>')
+    html = html.replace('<script src="voiceguard.js" defer></script>', '<script src="/voiceguard.js?v=local-8" defer></script><script src="/assets/database.js" defer></script>')
     html = html.replace('</head>', '<script src="/assets/waveform.js" defer></script></head>')
     html = html.replace('</body>', '<section class="database-panel" aria-label="User data storage"><p id="databaseStatus" role="status">Connecting to user database…</p><button id="retryDatabase" type="button">Reconnect</button><button id="importBrowserHistory" class="hidden" type="button">Import existing browser history</button></section></body>')
     html = html.replace('</body>', NAV + '<script src="/assets/interactions.js" defer></script></body>')
@@ -98,6 +120,42 @@ def refine_html(html):
 
 
 def refine_script(source):
+    source=source.replace('const waveLines = [];', '''const waveLines = [];
+    let signalShape='wave';
+    const signalCenter=new THREE.Mesh(new THREE.IcosahedronGeometry(.34,1),new THREE.MeshBasicMaterial({color:0x00e0ee,wireframe:true,transparent:true,opacity:.35}));
+    signalCenter.visible=false;
+    group.add(signalCenter);''')
+    source=source.replace('const x=(i/(samples-1)-.5)*7.2;', '''if(signalShape==='orb'){
+            const angle=i/(samples-1)*Math.PI*2,longitude=layer/26*Math.PI;
+            const ripple=(scanning?.23:.13)*Math.sin(angle*7+t*1.15+layer*.3)*Math.sin(angle*3-t*.35);
+            const radius=1.63+ripple;
+            points[i*3]=Math.cos(angle)*Math.sin(longitude)*radius;
+            points[i*3+1]=Math.sin(angle)*radius;
+            points[i*3+2]=Math.cos(angle)*Math.cos(longitude)*radius;
+            continue;
+          }
+          const x=(i/(samples-1)-.5)*7.2;''')
+    source=source.replace('const stage = $("coreStage");', '''const stage = $("coreStage");
+    $("coreShape").addEventListener('click',()=>{
+      signalShape=signalShape==='orb'?'wave':'orb';signalCenter.visible=signalShape==='orb';
+      $("coreShape").textContent=signalShape==='orb'?'Wave view':'Orb view';
+      $("coreShape").setAttribute('aria-pressed',String(signalShape==='wave'));
+      $("coreInteractionHint").textContent=signalShape==='orb'?'DRAG TO ROTATE ORB':'ANIMATED SIGNAL WAVES';
+      stage.setAttribute('aria-label',signalShape==='orb'?'Interactive signal orb; drag to rotate and Ctrl-scroll to zoom':'Animated signal waves; Ctrl-scroll to zoom');
+      group.rotation.set(0,0,0);zoom=fitCoreZoom();camera.position.z=zoom;
+      updateWaves(0);
+    });''')
+    source=source.replace('$("accountBtn").addEventListener("click", () => setPage("profile"));','')
+    source=source.replace('liveActive=false;liveToken++;','liveActive=false;liveToken++;\n  clearResults();')
+    source=source.replace('fetch(`${API_BASE}/api/detect`,','fetchDetection(`${API_BASE}/api/detect`,')
+    activity=(Path(__file__).parent/'assets/detection-status.js').read_text(encoding='utf-8')
+    source += '\n' + activity
+    source=re.sub(r'^\s*\$\("(?:aiScore|scoreBar)"\)[^\n]+;', '', source, flags=re.MULTILINE)
+    source=re.sub(r'^\s*\$\("prediction"\)\.textContent = [^\n]+;',
+        '\n  $("prediction").textContent = ai ? "AI voice detected" : "Human voice detected";',source,flags=re.MULTILINE)
+    source=source.replace('row.append(file,model,score,verdict,remove)', 'row.append(file,model,verdict,remove)')
+    source=re.sub(r'\$\("liveStatus"\)\.textContent=`\$\{result\.ai\?"AI":"Human"\} indication[^`]+`;',
+        '$("liveStatus").textContent=result.ai?"AI voice detected · listening again...":"Human voice detected · listening again...";',source)
     source=source.replace('if (activeLink && indicator) {','if(indicator)indicator.style.opacity=activeLink?.dataset.page==="settings"?"0":"1";\n  if (activeLink && indicator) {')
     recording=(Path(__file__).parent/'assets/recorder-functions.js').read_text(encoding='utf-8')
     source=re.sub(r'function stopMicrophone\(\).*?\$\("stopRecord"\)\.addEventListener\("click", stopRecording\);',lambda match:recording,source,flags=re.S)
@@ -123,20 +181,36 @@ def refine_script(source):
         '$("menuBtn").addEventListener("click", () => { if(innerWidth<=760){$("sidebar").classList.toggle("open");}else{document.querySelector(".app-shell").classList.toggle("sidebar-collapsed");} });')
     source = re.sub(r'\$\("exportHistory"\).addEventListener\("click", \(\) => \{.*?\n\}\);', '', source, flags=re.S)
     source = source.replace('let drag=false,px=0,py=0,spin=true,zoom=7.8;',
-        'let drag=false,px=0,py=0,spin=!reducedMotion,zoom=7.8,motionTime=0;\n'
+        'let drag=false,px=0,py=0,spin=true,zoom=7.8,motionTime=0;\n'
         '$("toggleSpin").textContent=spin?"Ⅱ Pause Motion":"▶ Resume Motion";\n'
         '$("toggleSpin").setAttribute("aria-pressed",String(!spin));')
     source = re.sub(r'\$\("toggleSpin"\).addEventListener\("click",\(\)=>\{spin=!spin;.*?\}\);',
         '$("toggleSpin").addEventListener("click",()=>{spin=!spin;$("toggleSpin").textContent=spin?"Ⅱ Pause Motion":"▶ Resume Motion";$("toggleSpin").setAttribute("aria-pressed",String(!spin));});', source)
     source = source.replace('const t=clock.getElapsedTime();if(spin&&!drag&&!reducedMotion)',
-        'const dt=Math.min(clock.getDelta(),.05);if(spin)motionTime+=dt;const t=motionTime;if(spin&&!drag)')
+        'const dt=Math.min(clock.getDelta(),.05);if(spin)motionTime+=dt;const t=motionTime;if(spin&&!drag&&signalShape==="orb")')
+    source=source.replace('stage.addEventListener("pointerdown",e=>{drag=true;',
+        'stage.addEventListener("pointerdown",e=>{if(signalShape!=="orb")return;drag=true;')
+    source=source.replace('if(!drag)return;group.rotation.y+=',
+        'if(!drag||signalShape!=="orb")return;group.rotation.y+=')
     source = source.replace('"—"', '"Not available"')
+    source=source.replace('function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}',
+        '''function fitCoreZoom(){
+      const tangent=Math.tan(20*Math.PI/180);
+      return signalShape==='wave'
+        ? Math.max(4.5,3.9/(tangent*camera.aspect),2/tangent)
+        : Math.max(4.5,1.95/(tangent*Math.min(1,camera.aspect)));
+    }
+    function resize(){const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h);camera.aspect=w/h;zoom=fitCoreZoom();camera.position.z=zoom;camera.updateProjectionMatrix();}''')
+    source=source.replace('group.rotation.set(0,0,0);zoom=7.8;camera.position.z=zoom;',
+        'group.rotation.set(0,0,0);zoom=fitCoreZoom();camera.position.z=zoom;')
+    source=source.replace('Math.min(12,zoom+e.deltaY*.008)',
+        'Math.min(Math.max(12,fitCoreZoom()*1.8),zoom+e.deltaY*.008)')
     return source
 
 
 PAGES = {
     "about": ("About VoiceGuard", '''<p>VoiceGuard is an academic project for investigating AI-generated speech. Upload a recording, choose a detector, and compare its output with what you hear.</p>
-<h2>What the models do</h2><p>PellaV2 uses a trained Wav2Vec2 Base classifier. NII AntiDeepfake uses a trained MMS-300M frontend and binary classifier. Forensics XLS-R Wild and the official ProSDD ASVspoof2019 release use recovered public checkpoints. Each model produces an experimental score for fake and real speech. The public ProSDD release is separate from the private epoch-4 fine-tune previously configured here.</p>
+<h2>What the models do</h2><p>Forensics XLS-R Wild uses a trained XLS-R frontend with AASIST graph-attention pooling. PellaV2 uses a trained Wav2Vec2 Base classifier. NII AntiDeepfake uses a trained MMS-300M frontend and binary classifier. The official ProSDD ASVspoof2019 release uses a recovered public checkpoint. Each model produces an experimental score for fake and real speech. The public ProSDD release is separate from the private epoch-4 fine-tune previously configured here.</p>
 <h2>What a score means</h2><p>A score is the model's output for that recording. It is not a measured probability that a speaker is lying, and it cannot establish someone's identity. Compression, background noise, language, and unfamiliar synthesis methods can change the result.</p>
 <h2>Data and privacy</h2><p>Audio is sent to the backend that serves this local dashboard. Profile details and analysis history are stored in a SQLite database on that server. Passwords and raw audio are not stored in the database. Google sign-in uses Firebase. Guest history is scoped to a private browser cookie; signed-in history belongs to the verified Firebase account. Do not upload a recording without permission from the people involved.</p>
 <h2>Research limits</h2><p>The installed models passed upload smoke checks with the supplied samples. That is not a representative accuracy benchmark. A separate, labeled evaluation is needed before reporting accuracy.</p>'''),

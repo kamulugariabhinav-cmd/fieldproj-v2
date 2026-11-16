@@ -16,6 +16,7 @@ from voiceguard_addon.presentation import polish
 
 from voiceguard_addon import legacy as original
 from backend.audio_processor import decode_audio_bytes, AudioProcessingError
+from voiceguard_addon.worker_client import runtime_ready
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -24,7 +25,7 @@ def recovered_model_ready(name):
     directory=ROOT/'voiceguard_addon/weights'/name
     checkpoint={'prosdd':'official_asv2019.pth','forensics':'checkpoint_epoch_4.safetensors'}.get(name)
     return bool(checkpoint and (directory/checkpoint).is_file() and (directory/'validation.json').is_file()
-                and (ROOT/'voiceguard_addon/.inference-env/ready.json').is_file())
+                and runtime_ready())
 
 
 def missing_model_weights(name):
@@ -58,7 +59,7 @@ def get_detector(name):
             # This machine has limited RAM; retain only one optional model.
             detectors.clear()
             gc.collect()
-            if (ROOT/'voiceguard_addon/.inference-env/ready.json').is_file():
+            if runtime_ready():
                 from voiceguard_addon.worker_client import DetectorProxy
                 detectors[name] = DetectorProxy(name)
             else:
@@ -81,7 +82,10 @@ def dashboard(request: Request):
         raise RuntimeError("Original model selector changed; update the optional add-on")
     html = html.replace(marker, marker + '\n<option value="pella">Pella // PellaV2</option>'
                         '\n<option value="nii">NII // AntiDeepfake MMS-300M</option>')
-    html = html.replace('<option value="pella">', '<option value="pella" selected>')
+    forensics_option = '<option value="forensics">Forensics // XLS-R Wild</option>'
+    html = html.replace(forensics_option, '').replace(marker, marker + '\n' + forensics_option)
+    default_model = 'forensics' if recovered_model_ready('forensics') else 'pella'
+    html = html.replace(f'<option value="{default_model}">', f'<option value="{default_model}" selected>')
     if recovered_model_ready('prosdd'):
         html=re.sub(r'(<option value="prosdd">).*?(</option>)',r'\1ProSDD // Official ASVspoof2019\2',html)
     for name in ('prosdd', 'forensics'):
@@ -89,7 +93,7 @@ def dashboard(request: Request):
             html = re.sub(r'<option value="' + name + r'">(.*?)</option>',
                 lambda match: '<option value="' + name + '" disabled>' + match[1] + ' (checkpoint missing)</option>', html)
     return HTMLResponse(refine_html(html).replace('content="/assets/voiceguard-social.png"',
-        f'content="{request.base_url}assets/voiceguard-social.png"'))
+        f'content="{request.base_url}assets/voiceguard-social.png"'), headers={"Cache-Control": "no-store"})
 
 
 @app.get("/", include_in_schema=False)
@@ -99,7 +103,7 @@ def home(request: Request):
     if recovered_model_ready('prosdd') and recovered_model_ready('forensics'):
         html=html.replace('2 trained detectors','4 trained detectors')
         html=html.replace('PellaV2 and NII AntiDeepfake have trained weights installed. The dashboard also lists ProSDD and Forensics; they stay unavailable until their required checkpoints are supplied.',
-            'PellaV2, NII AntiDeepfake, Forensics XLS-R Wild, and the official ProSDD ASVspoof2019 release are installed and have passed project-sample inference checks. The public ProSDD release is distinct from the private epoch-4 fine-tune previously configured here.')
+            'Forensics XLS-R Wild, PellaV2, NII AntiDeepfake, and the official ProSDD ASVspoof2019 release are installed and have passed project-sample inference checks. The public ProSDD release is distinct from the private epoch-4 fine-tune previously configured here.')
     return HTMLResponse(polish(html,'home').replace('content="/assets/voiceguard-social.png"',
         f'content="{request.base_url}assets/voiceguard-social.png"'))
 
@@ -146,7 +150,8 @@ def javascript():
         if source.count(old) != 1:
             raise RuntimeError("Original result renderer changed; update the optional add-on")
         source = source.replace(old, new)
-    return Response(refine_script(source), media_type="application/javascript")
+    return Response(refine_script(source), media_type="application/javascript",
+                    headers={"Cache-Control": "no-store"})
 
 
 @app.get("/config.js", include_in_schema=False)
@@ -197,7 +202,7 @@ async def detect(audio: UploadFile = File(...), model: str = Form("prosdd")):
 
 @app.get("/api/addon/status")
 def status():
-    isolated=(ROOT/'voiceguard_addon/.inference-env/ready.json').is_file()
+    isolated=runtime_ready()
     return {"pella_loaded": not isolated and "pella" in detectors, "nii_loaded": not isolated and "nii" in detectors,
             "inference_mode": "isolated worker per request" if isolated else "in-process",
             "pipeline_checked": {name:(ROOT/'voiceguard_addon/weights'/name/'validation.json').is_file() for name in ('pella','nii','prosdd','forensics')},

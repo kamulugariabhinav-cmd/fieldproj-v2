@@ -9,7 +9,7 @@
   audio.addEventListener('emptied',()=>{seek.value=0;seek.disabled=true;});
   const steps=[
     ['Start with the original recording.','Choose a supported audio file under 25 MB. Keep the original rather than repeatedly converting it. You can also record in your browser after granting microphone permission.','Open the upload workspace ↗','/dashboard'],
-    ['Compare trained detectors on the same audio.','Choose PellaV2 or NII AntiDeepfake. Start the scan and wait for the backend result. Different models can disagree, and a high score can still be wrong.','Explore the available models ↓','#models'],
+    ['Compare trained detectors on the same audio.','Choose Forensics, PellaV2, NII AntiDeepfake, or ProSDD. Start the scan and wait for the backend result. Different models can disagree, and a high score can still be wrong.','Explore the available models ↓','#models'],
     ['Keep the result and its context together.','Review the model name, score, recording length, and warnings. Your saved history can be searched and exported as PDF, Excel, Word, or JSON.','Read the recording and results guide ↗','/guide']
   ];
   const buttons=[...document.querySelectorAll('[data-step]')];

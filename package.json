@@ -4,5 +4,8 @@
   "description": "VoiceGuard AI Deepfake & Anti-Spoofing Detection System",
   "scripts": {
     "build": "node build.js"
+  },
+  "dependencies": {
+    "gsap": "^3.15.1"
   }
 }
